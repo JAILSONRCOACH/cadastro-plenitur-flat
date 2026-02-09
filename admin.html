@@ -573,6 +573,77 @@
 
           <!-- DASHBOARD VIEW -->
           <div id="section-dashboard" class="space-y-6 section-view">
+            <div
+              class="bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-gray-100"
+            >
+              <div
+                class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between"
+              >
+                <div>
+                  <p class="text-sm font-semibold text-slate-800">
+                    Filtros da Visão Geral
+                  </p>
+                  <p
+                    id="dashboard-filter-summary"
+                    class="text-xs text-slate-500 mt-1"
+                  >
+                    Selecione mês e ano para atualizar os indicadores.
+                  </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <div
+                    id="dashboard-period-filter"
+                    class="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm"
+                  >
+                    <label
+                      for="dashboard-period-select"
+                      class="text-sm text-slate-500"
+                      >Visão</label
+                    >
+                    <select
+                      id="dashboard-period-select"
+                      class="bg-transparent text-sm font-medium text-slate-700 focus:outline-none"
+                    ></select>
+                  </div>
+                  <div
+                    id="dashboard-month-filter"
+                    class="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm"
+                  >
+                    <label
+                      for="dashboard-month-select"
+                      class="text-sm text-slate-500"
+                      >Mês</label
+                    >
+                    <select
+                      id="dashboard-month-select"
+                      class="bg-transparent text-sm font-medium text-slate-700 focus:outline-none"
+                    ></select>
+                  </div>
+                  <div
+                    id="dashboard-year-filter"
+                    class="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 shadow-sm"
+                  >
+                    <label
+                      for="dashboard-year-select"
+                      class="text-sm text-slate-500"
+                      >Ano</label
+                    >
+                    <select
+                      id="dashboard-year-select"
+                      class="bg-transparent text-sm font-medium text-slate-700 focus:outline-none"
+                    ></select>
+                  </div>
+                  <button
+                    type="button"
+                    onclick="resetDashboardFilters()"
+                    class="px-3 py-2 rounded-lg text-sm font-semibold border border-slate-200 text-slate-700 hover:bg-slate-50"
+                  >
+                    Atual
+                  </button>
+                </div>
+              </div>
+            </div>
+
             <!-- Stats Grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
               <div
@@ -600,7 +671,10 @@
               >
                 <div class="flex justify-between items-start">
                   <div>
-                    <p class="text-sm font-medium text-gray-500">
+                    <p
+                      id="stat-month-label"
+                      class="text-sm font-medium text-gray-500"
+                    >
                       Reservas Este Mês
                     </p>
                     <h3
@@ -620,7 +694,10 @@
               >
                 <div class="flex justify-between items-start">
                   <div>
-                    <p class="text-sm font-medium text-gray-500">
+                    <p
+                      id="stat-revenue-label"
+                      class="text-sm font-medium text-gray-500"
+                    >
                       Reservado no Mês
                     </p>
                     <h3
@@ -660,7 +737,10 @@
               >
                 <div class="flex justify-between items-start">
                   <div>
-                    <p class="text-sm font-medium text-gray-500">
+                    <p
+                      id="stat-receivable-label"
+                      class="text-sm font-medium text-gray-500"
+                    >
                       Saldo a Receber (Mês)
                     </p>
                     <h3
@@ -680,7 +760,10 @@
               >
                 <div class="flex justify-between items-start">
                   <div>
-                    <p class="text-sm font-medium text-gray-500">
+                    <p
+                      id="stat-occupancy-label"
+                      class="text-sm font-medium text-gray-500"
+                    >
                       Taxa de Ocupação (Mês)
                     </p>
                     <h3
@@ -708,7 +791,12 @@
                 class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
               >
                 <div class="flex items-center justify-between mb-4">
-                  <h3 class="font-bold text-gray-800">Taxa de Ocupação (Ano)</h3>
+                  <h3
+                    id="dashboard-occupancy-chart-title"
+                    class="font-bold text-gray-800"
+                  >
+                    Taxa de Ocupação (Ano)
+                  </h3>
                   <span class="text-xs text-gray-500">Noites ocupadas (%)</span>
                 </div>
                 <div class="h-72">
@@ -720,8 +808,15 @@
                 class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
               >
                 <div class="flex items-center justify-between mb-4">
-                  <h3 class="font-bold text-gray-800">Financeiro (Ano)</h3>
-                  <span class="text-xs text-gray-500">Recebido x a receber</span>
+                  <h3
+                    id="dashboard-financial-chart-title"
+                    class="font-bold text-gray-800"
+                  >
+                    Financeiro (Ano)
+                  </h3>
+                  <span class="text-xs text-gray-500"
+                    >Recebido x a receber</span
+                  >
                 </div>
                 <div class="h-72">
                   <canvas id="dashboard-financial-chart"></canvas>
@@ -995,7 +1090,9 @@
                       type="submit"
                       class="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800"
                     >
-                      <span id="manual-block-submit-label">Salvar bloqueio</span>
+                      <span id="manual-block-submit-label"
+                        >Salvar bloqueio</span
+                      >
                     </button>
                     <button
                       type="button"
@@ -1044,7 +1141,10 @@
                   </div>
                 </div>
 
-                <div id="calendar-day-detail-card" class="calendar-day-detail-card mt-4 hidden">
+                <div
+                  id="calendar-day-detail-card"
+                  class="calendar-day-detail-card mt-4 hidden"
+                >
                   <div class="flex items-center justify-between gap-3 mb-2">
                     <h5
                       id="calendar-day-detail-title"
@@ -1143,12 +1243,15 @@
                   </div>
                 </div>
                 <p class="text-xs text-slate-500">
-                  Toque em um dia para ver os clientes e bloqueios daquele período.
+                  Toque em um dia para ver os clientes e bloqueios daquele
+                  período.
                 </p>
               </div>
 
               <div class="mt-6 border-t border-gray-100 pt-6">
-                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div
+                  class="flex flex-wrap items-center justify-between gap-2 mb-3"
+                >
                   <h4 class="text-base font-semibold text-slate-800">
                     Bloqueios manuais
                   </h4>
@@ -1371,8 +1474,12 @@
       let signatureCtx = null;
       let signatureDrawing = false;
       let calendarFiltersInitialized = false;
+      let dashboardFiltersInitialized = false;
       let manualBlockFormInitialized = false;
       let calendarViewMode = "month";
+      let dashboardFilterMode = "month";
+      let dashboardFilterMonth = new Date().getMonth();
+      let dashboardFilterYear = new Date().getFullYear();
       const calendarMonthNames = [
         "Janeiro",
         "Fevereiro",
@@ -1539,10 +1646,10 @@
           manualDateBlocks = blocksResult.data || [];
         }
 
-        updateStats();
+        initDashboardFilters();
+        updateDashboardView();
         renderNextArrivals();
         renderDashboardBlockedDates();
-        renderDashboardCharts();
         renderPendingTable();
         renderAllTable();
         renderCalendar();
@@ -1555,11 +1662,191 @@
         }).format(Number(value || 0));
       }
 
+      function isReservationPendingAdmin(reservation) {
+        return (
+          !reservation.admin_signature_url &&
+          (reservation.contract_signed_url ||
+            reservation.status === "pending_admin_signature")
+        );
+      }
+
+      function getDashboardYears() {
+        const years = new Set();
+        allReservations.forEach((reservation) => {
+          const addYear = (value, hasTime = false) => {
+            if (!value) return;
+            const dateValue = hasTime ? value : `${value}T12:00:00`;
+            const parsed = new Date(dateValue);
+            if (!Number.isNaN(parsed.getTime())) {
+              years.add(parsed.getFullYear());
+            }
+          };
+          addYear(reservation.created_at, true);
+          addYear(reservation.check_in);
+          addYear(reservation.check_out);
+        });
+        years.add(new Date().getFullYear());
+        return Array.from(years).sort((a, b) => a - b);
+      }
+
+      function updateDashboardCardLabels(mode, year, month) {
+        const monthName = calendarMonthNames[month];
+        const monthLabel = monthName ? monthName.slice(0, 3) : "--";
+
+        const monthEl = document.getElementById("stat-month-label");
+        const revenueEl = document.getElementById("stat-revenue-label");
+        const receivableEl = document.getElementById("stat-receivable-label");
+        const occupancyEl = document.getElementById("stat-occupancy-label");
+        const summaryEl = document.getElementById("dashboard-filter-summary");
+        const occupancyChartTitle = document.getElementById(
+          "dashboard-occupancy-chart-title",
+        );
+        const financialChartTitle = document.getElementById(
+          "dashboard-financial-chart-title",
+        );
+
+        if (mode === "year") {
+          if (monthEl) monthEl.innerText = `Reservas no ano ${year}`;
+          if (revenueEl) revenueEl.innerText = `Reservado no ano ${year}`;
+          if (receivableEl)
+            receivableEl.innerText = `Saldo a Receber (${year})`;
+          if (occupancyEl) occupancyEl.innerText = `Taxa de Ocupação (${year})`;
+          if (summaryEl)
+            summaryEl.innerText = `Período selecionado: consolidado de ${year}.`;
+          if (occupancyChartTitle)
+            occupancyChartTitle.innerText = `Taxa de Ocupação (${year})`;
+          if (financialChartTitle)
+            financialChartTitle.innerText = `Financeiro (${year})`;
+          return;
+        }
+
+        if (mode === "general") {
+          if (monthEl) monthEl.innerText = "Reservas (Consolidado Geral)";
+          if (revenueEl) revenueEl.innerText = "Reservado (Consolidado Geral)";
+          if (receivableEl)
+            receivableEl.innerText = "Saldo a Receber (Consolidado Geral)";
+          if (occupancyEl)
+            occupancyEl.innerText = "Taxa de Ocupação (Consolidado Geral)";
+          if (summaryEl)
+            summaryEl.innerText =
+              "Período selecionado: consolidado geral (todos os anos).";
+          if (occupancyChartTitle)
+            occupancyChartTitle.innerText = "Taxa de Ocupação por Ano (Geral)";
+          if (financialChartTitle)
+            financialChartTitle.innerText = "Financeiro por Ano (Geral)";
+          return;
+        }
+
+        if (monthEl) monthEl.innerText = `Reservas em ${monthLabel}/${year}`;
+        if (revenueEl)
+          revenueEl.innerText = `Reservado em ${monthLabel}/${year}`;
+        if (receivableEl)
+          receivableEl.innerText = `Saldo a Receber (${monthLabel}/${year})`;
+        if (occupancyEl)
+          occupancyEl.innerText = `Taxa de Ocupação (${monthLabel}/${year})`;
+        if (summaryEl) {
+          summaryEl.innerText = `Período selecionado: ${monthName || "--"} de ${year}.`;
+        }
+        if (occupancyChartTitle)
+          occupancyChartTitle.innerText = `Taxa de Ocupação (${year})`;
+        if (financialChartTitle)
+          financialChartTitle.innerText = `Financeiro (${year})`;
+      }
+
+      function syncDashboardFilterControls() {
+        const mode = dashboardFilterMode;
+        const monthSelect = document.getElementById("dashboard-month-select");
+        const yearSelect = document.getElementById("dashboard-year-select");
+        const monthFilter = document.getElementById("dashboard-month-filter");
+        const yearFilter = document.getElementById("dashboard-year-filter");
+
+        if (monthSelect) {
+          monthSelect.disabled = mode !== "month";
+        }
+        if (yearSelect) {
+          yearSelect.disabled = mode === "general";
+        }
+        if (monthFilter) {
+          monthFilter.classList.toggle("opacity-60", mode !== "month");
+        }
+        if (yearFilter) {
+          yearFilter.classList.toggle("opacity-60", mode === "general");
+        }
+      }
+
+      function initDashboardFilters() {
+        const modeSelect = document.getElementById("dashboard-period-select");
+        const monthSelect = document.getElementById("dashboard-month-select");
+        const yearSelect = document.getElementById("dashboard-year-select");
+        if (!modeSelect || !monthSelect || !yearSelect) return;
+
+        modeSelect.innerHTML = `
+          <option value="month">Mensal</option>
+          <option value="year">Consolidado do Ano</option>
+          <option value="general">Consolidado Geral</option>
+        `;
+
+        monthSelect.innerHTML = calendarMonthNames
+          .map((name, index) => `<option value="${index}">${name}</option>`)
+          .join("");
+
+        const yearOptions = getDashboardYears();
+        if (!yearOptions.includes(dashboardFilterYear)) {
+          dashboardFilterYear = yearOptions[yearOptions.length - 1];
+        }
+        yearSelect.innerHTML = yearOptions
+          .map((year) => `<option value="${year}">${year}</option>`)
+          .join("");
+
+        modeSelect.value = dashboardFilterMode;
+        monthSelect.value = String(dashboardFilterMonth);
+        yearSelect.value = String(dashboardFilterYear);
+
+        if (!dashboardFiltersInitialized) {
+          modeSelect.addEventListener("change", () => {
+            dashboardFilterMode = modeSelect.value;
+            syncDashboardFilterControls();
+            updateDashboardView();
+          });
+          monthSelect.addEventListener("change", () => {
+            dashboardFilterMonth = parseInt(monthSelect.value, 10);
+            updateDashboardView();
+          });
+          yearSelect.addEventListener("change", () => {
+            dashboardFilterYear = parseInt(yearSelect.value, 10);
+            updateDashboardView();
+          });
+          dashboardFiltersInitialized = true;
+        }
+
+        syncDashboardFilterControls();
+      }
+
+      function resetDashboardFilters() {
+        const now = new Date();
+        dashboardFilterMode = "month";
+        dashboardFilterMonth = now.getMonth();
+        dashboardFilterYear = now.getFullYear();
+        initDashboardFilters();
+        updateDashboardView();
+      }
+
+      function updateDashboardView() {
+        updateDashboardCardLabels(
+          dashboardFilterMode,
+          dashboardFilterYear,
+          dashboardFilterMonth,
+        );
+        updateStats(
+          dashboardFilterYear,
+          dashboardFilterMonth,
+          dashboardFilterMode,
+        );
+        renderDashboardCharts(dashboardFilterYear, dashboardFilterMode);
+      }
+
       function getReservationsCreatedInMonth(year, month) {
-        return allReservations.filter((reservation) => {
-          if (!reservation.created_at) return false;
-          const status = String(reservation.status || "").toLowerCase();
-          if (status === "cancelled" || status === "canceled") return false;
+        return getActiveReservationsWithCreatedAt().filter((reservation) => {
           const createdAt = new Date(reservation.created_at);
           return (
             createdAt.getFullYear() === year && createdAt.getMonth() === month
@@ -1567,10 +1854,31 @@
         });
       }
 
+      function getReservationsCreatedInYear(year) {
+        return getActiveReservationsWithCreatedAt().filter((reservation) => {
+          const createdAt = new Date(reservation.created_at);
+          return createdAt.getFullYear() === year;
+        });
+      }
+
+      function getReservationsCreatedAll() {
+        return getActiveReservationsWithCreatedAt();
+      }
+
+      function getActiveReservationsWithCreatedAt() {
+        return allReservations.filter((reservation) => {
+          if (!reservation.created_at) return false;
+          if (isReservationCancelled(reservation)) return false;
+          const createdAt = new Date(reservation.created_at);
+          return !Number.isNaN(createdAt.getTime());
+        });
+      }
+
       function getReservationFinancial(reservation) {
         const total =
-          parseFloat(reservation.total_amount || reservation.total_value || 0) ||
-          0;
+          parseFloat(
+            reservation.total_amount || reservation.total_value || 0,
+          ) || 0;
         const deposit = parseFloat(reservation.deposit_amount || 0) || 0;
         const status = String(reservation.status || "").toLowerCase();
         const isCancelled = status === "cancelled" || status === "canceled";
@@ -1606,26 +1914,53 @@
         };
       }
 
-      function getOccupiedNightsForMonth(year, month) {
-        const monthStart = new Date(year, month, 1);
-        const monthEndExclusive = new Date(year, month + 1, 1);
+      function summarizeFinancial(reservations) {
+        let total = 0;
+        let received = 0;
+        let receivable = 0;
+
+        reservations.forEach((reservation) => {
+          const financial = getReservationFinancial(reservation);
+          total += financial.total;
+          received += financial.received;
+          receivable += financial.receivable;
+        });
+
+        return { total, received, receivable };
+      }
+
+      function getOccupiedNightsInRange(rangeStart, rangeEndExclusive) {
+        if (
+          !rangeStart ||
+          !rangeEndExclusive ||
+          rangeEndExclusive <= rangeStart
+        ) {
+          return 0;
+        }
+
         const occupiedNights = new Set();
 
         allReservations.forEach((reservation) => {
           if (!reservation.check_in || !reservation.check_out) return;
-          const status = String(reservation.status || "").toLowerCase();
-          if (status === "cancelled" || status === "canceled") return;
+          if (isReservationCancelled(reservation)) return;
 
           const startDate = new Date(reservation.check_in + "T12:00:00");
           const endDate = new Date(reservation.check_out + "T12:00:00");
+          if (
+            Number.isNaN(startDate.getTime()) ||
+            Number.isNaN(endDate.getTime()) ||
+            endDate <= startDate
+          ) {
+            return;
+          }
 
-          if (endDate <= monthStart || startDate >= monthEndExclusive) return;
+          if (endDate <= rangeStart || startDate >= rangeEndExclusive) return;
 
           const cursor = new Date(
-            Math.max(startDate.getTime(), monthStart.getTime()),
+            Math.max(startDate.getTime(), rangeStart.getTime()),
           );
           const endLimit = new Date(
-            Math.min(endDate.getTime(), monthEndExclusive.getTime()),
+            Math.min(endDate.getTime(), rangeEndExclusive.getTime()),
           );
 
           while (cursor < endLimit) {
@@ -1638,43 +1973,110 @@
         return occupiedNights.size;
       }
 
-      function getMonthlyOccupancy(year, month) {
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const occupiedNights = getOccupiedNightsForMonth(year, month);
-        const rate = daysInMonth
-          ? (occupiedNights / daysInMonth) * 100
-          : 0;
-        return { occupiedNights, daysInMonth, rate };
+      function getOccupiedNightsForMonth(year, month) {
+        const monthStart = new Date(year, month, 1);
+        const monthEndExclusive = new Date(year, month + 1, 1);
+        return getOccupiedNightsInRange(monthStart, monthEndExclusive);
       }
 
-      function updateStats() {
-        const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
+      function getMonthlyOccupancy(year, month) {
+        const totalNights = new Date(year, month + 1, 0).getDate();
+        const occupiedNights = getOccupiedNightsForMonth(year, month);
+        const rate = totalNights ? (occupiedNights / totalNights) * 100 : 0;
+        return { occupiedNights, totalNights, rate };
+      }
 
-        const pendingCount = allReservations.filter(
-          (reservation) =>
-            !reservation.admin_signature_url &&
-            (reservation.contract_signed_url ||
-              reservation.status === "pending_admin_signature"),
-        ).length;
-
-        const monthReservations = getReservationsCreatedInMonth(
-          currentYear,
-          currentMonth,
+      function getYearlyOccupancy(year) {
+        const yearStart = new Date(year, 0, 1);
+        const yearEndExclusive = new Date(year + 1, 0, 1);
+        const totalNights = Math.round(
+          (yearEndExclusive.getTime() - yearStart.getTime()) / 86400000,
         );
+        const occupiedNights = getOccupiedNightsInRange(
+          yearStart,
+          yearEndExclusive,
+        );
+        const rate = totalNights ? (occupiedNights / totalNights) * 100 : 0;
+        return { occupiedNights, totalNights, rate };
+      }
 
-        let monthTotal = 0;
-        let monthReceived = 0;
-        let monthReceivable = 0;
-        monthReservations.forEach((reservation) => {
-          const financial = getReservationFinancial(reservation);
-          monthTotal += financial.total;
-          monthReceived += financial.received;
-          monthReceivable += financial.receivable;
+      function getGlobalOccupancy() {
+        let minStart = null;
+        let maxEndExclusive = null;
+
+        allReservations.forEach((reservation) => {
+          if (!reservation.check_in || !reservation.check_out) return;
+          if (isReservationCancelled(reservation)) return;
+
+          const startDate = new Date(reservation.check_in + "T12:00:00");
+          const endDate = new Date(reservation.check_out + "T12:00:00");
+          if (
+            Number.isNaN(startDate.getTime()) ||
+            Number.isNaN(endDate.getTime()) ||
+            endDate <= startDate
+          ) {
+            return;
+          }
+
+          if (!minStart || startDate < minStart) minStart = startDate;
+          if (!maxEndExclusive || endDate > maxEndExclusive) {
+            maxEndExclusive = endDate;
+          }
         });
 
-        const occupancy = getMonthlyOccupancy(currentYear, currentMonth);
+        if (!minStart || !maxEndExclusive) {
+          return { occupiedNights: 0, totalNights: 0, rate: 0 };
+        }
+
+        const totalNights = Math.max(
+          Math.round(
+            (maxEndExclusive.getTime() - minStart.getTime()) / 86400000,
+          ),
+          0,
+        );
+        const occupiedNights = getOccupiedNightsInRange(
+          minStart,
+          maxEndExclusive,
+        );
+        const rate = totalNights ? (occupiedNights / totalNights) * 100 : 0;
+        return { occupiedNights, totalNights, rate };
+      }
+
+      function updateStats(selectedYear, selectedMonth, selectedMode) {
+        const year =
+          Number.isInteger(selectedYear) && selectedYear >= 1900
+            ? selectedYear
+            : new Date().getFullYear();
+        const month =
+          Number.isInteger(selectedMonth) &&
+          selectedMonth >= 0 &&
+          selectedMonth <= 11
+            ? selectedMonth
+            : new Date().getMonth();
+        const mode =
+          selectedMode === "year" || selectedMode === "general"
+            ? selectedMode
+            : "month";
+
+        const pendingCountGlobal = allReservations.filter(
+          isReservationPendingAdmin,
+        ).length;
+        const reservationsForPeriod =
+          mode === "year"
+            ? getReservationsCreatedInYear(year)
+            : mode === "general"
+              ? getReservationsCreatedAll()
+              : getReservationsCreatedInMonth(year, month);
+        const pendingCount = reservationsForPeriod.filter(
+          isReservationPendingAdmin,
+        ).length;
+        const financial = summarizeFinancial(reservationsForPeriod);
+        const occupancy =
+          mode === "year"
+            ? getYearlyOccupancy(year)
+            : mode === "general"
+              ? getGlobalOccupancy()
+              : getMonthlyOccupancy(year, month);
 
         const statPending = document.getElementById("stat-pending");
         const statMonth = document.getElementById("stat-month");
@@ -1687,21 +2089,24 @@
         );
 
         if (statPending) statPending.innerText = String(pendingCount);
-        if (statMonth) statMonth.innerText = String(monthReservations.length);
-        if (statRevenue) statRevenue.innerText = formatCurrencyBR(monthTotal);
-        if (statReceived) statReceived.innerText = formatCurrencyBR(monthReceived);
+        if (statMonth)
+          statMonth.innerText = String(reservationsForPeriod.length);
+        if (statRevenue)
+          statRevenue.innerText = formatCurrencyBR(financial.total);
+        if (statReceived)
+          statReceived.innerText = formatCurrencyBR(financial.received);
         if (statReceivable)
-          statReceivable.innerText = formatCurrencyBR(monthReceivable);
+          statReceivable.innerText = formatCurrencyBR(financial.receivable);
         if (statOccupancy)
           statOccupancy.innerText = `${occupancy.rate.toFixed(1)}%`;
         if (statOccupancyDetail) {
-          statOccupancyDetail.innerText = `${occupancy.occupiedNights} de ${occupancy.daysInMonth} noites ocupadas`;
+          statOccupancyDetail.innerText = `${occupancy.occupiedNights} de ${occupancy.totalNights} noites ocupadas`;
         }
 
         const badge = document.getElementById("pending-badge");
         if (badge) {
-          if (pendingCount > 0) {
-            badge.innerText = pendingCount;
+          if (pendingCountGlobal > 0) {
+            badge.innerText = pendingCountGlobal;
             badge.classList.remove("hidden");
           } else {
             badge.classList.add("hidden");
@@ -1709,34 +2114,52 @@
         }
       }
 
-      function renderDashboardCharts() {
+      function renderDashboardCharts(selectedYear, selectedMode) {
         if (typeof Chart === "undefined") return;
-        const occupancyCanvas = document.getElementById("dashboard-occupancy-chart");
-        const financialCanvas = document.getElementById("dashboard-financial-chart");
+        const occupancyCanvas = document.getElementById(
+          "dashboard-occupancy-chart",
+        );
+        const financialCanvas = document.getElementById(
+          "dashboard-financial-chart",
+        );
         if (!occupancyCanvas || !financialCanvas) return;
 
-        const currentYear = new Date().getFullYear();
-        const labels = calendarMonthNames.map((name) => name.slice(0, 3));
+        const chartYear =
+          Number.isInteger(selectedYear) && selectedYear >= 1900
+            ? selectedYear
+            : new Date().getFullYear();
+        const mode = selectedMode === "general" ? "general" : "period";
+        const labels = [];
 
         const occupancyData = [];
         const receivedData = [];
         const receivableData = [];
 
-        for (let month = 0; month < 12; month++) {
-          const occupancy = getMonthlyOccupancy(currentYear, month);
-          occupancyData.push(Number(occupancy.rate.toFixed(1)));
+        if (mode === "general") {
+          const years = getDashboardYears();
+          years.forEach((year) => {
+            labels.push(String(year));
+            const occupancy = getYearlyOccupancy(year);
+            occupancyData.push(Number(occupancy.rate.toFixed(1)));
 
-          const monthReservations = getReservationsCreatedInMonth(currentYear, month);
-          let received = 0;
-          let receivable = 0;
-          monthReservations.forEach((reservation) => {
-            const financial = getReservationFinancial(reservation);
-            received += financial.received;
-            receivable += financial.receivable;
+            const financial = summarizeFinancial(
+              getReservationsCreatedInYear(year),
+            );
+            receivedData.push(Number(financial.received.toFixed(2)));
+            receivableData.push(Number(financial.receivable.toFixed(2)));
           });
+        } else {
+          for (let month = 0; month < 12; month++) {
+            labels.push(calendarMonthNames[month].slice(0, 3));
+            const occupancy = getMonthlyOccupancy(chartYear, month);
+            occupancyData.push(Number(occupancy.rate.toFixed(1)));
 
-          receivedData.push(Number(received.toFixed(2)));
-          receivableData.push(Number(receivable.toFixed(2)));
+            const financial = summarizeFinancial(
+              getReservationsCreatedInMonth(chartYear, month),
+            );
+            receivedData.push(Number(financial.received.toFixed(2)));
+            receivableData.push(Number(financial.receivable.toFixed(2)));
+          }
         }
 
         if (occupancyRateChart) {
@@ -1752,7 +2175,8 @@
             labels,
             datasets: [
               {
-                label: "Ocupação (%)",
+                label:
+                  mode === "general" ? "Ocupação anual (%)" : "Ocupação (%)",
                 data: occupancyData,
                 borderColor: "#2563eb",
                 backgroundColor: "rgba(37, 99, 235, 0.12)",
@@ -2785,7 +3209,9 @@
         const endInput = document.getElementById("manual-block-end-date");
         const notesInput = document.getElementById("manual-block-notes");
         const title = document.getElementById("manual-block-form-title");
-        const submitLabel = document.getElementById("manual-block-submit-label");
+        const submitLabel = document.getElementById(
+          "manual-block-submit-label",
+        );
 
         if (idInput) idInput.value = "";
         if (nameInput) nameInput.value = "";
@@ -2812,7 +3238,9 @@
         const endInput = document.getElementById("manual-block-end-date");
         const notesInput = document.getElementById("manual-block-notes");
         const title = document.getElementById("manual-block-form-title");
-        const submitLabel = document.getElementById("manual-block-submit-label");
+        const submitLabel = document.getElementById(
+          "manual-block-submit-label",
+        );
 
         if (panel) panel.classList.remove("hidden");
         if (idInput) idInput.value = block.id;
@@ -2897,7 +3325,9 @@
       }
 
       async function toggleManualBlockStatus(id, makeActive) {
-        const actionLabel = makeActive ? "marcar como indisponível" : "disponibilizar";
+        const actionLabel = makeActive
+          ? "marcar como indisponível"
+          : "disponibilizar";
         if (!confirm(`Deseja ${actionLabel} este período?`)) return;
         try {
           if (makeActive) {
@@ -2962,7 +3392,9 @@
         const tbody = document.getElementById("manual-block-body");
         const cards = document.getElementById("manual-block-cards");
         const empty = document.getElementById("manual-block-empty");
-        const tableWrapper = document.getElementById("manual-block-table-wrapper");
+        const tableWrapper = document.getElementById(
+          "manual-block-table-wrapper",
+        );
         const countLabel = document.getElementById("manual-block-count");
 
         if (!tbody || !cards || !empty || !tableWrapper || !countLabel) return;
@@ -2993,7 +3425,9 @@
           const refName = escapeHtml(block.client_name || "Sem referência");
           const notes = escapeHtml(block.notes || "-");
           const period = `${formatShortDateBR(block.start_date)} → ${formatShortDateBR(block.end_date)}`;
-          const toggleLabel = block.is_active ? "Disponibilizar" : "Indisponível";
+          const toggleLabel = block.is_active
+            ? "Disponibilizar"
+            : "Indisponível";
           const toggleClass = block.is_active
             ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
             : "bg-slate-100 text-slate-700 hover:bg-slate-200";
@@ -3180,7 +3614,9 @@
         const reservations = allReservations.filter((reservation) => {
           if (!reservation.check_in || !reservation.check_out) return false;
           if (isReservationCancelled(reservation)) return false;
-          return dateStr >= reservation.check_in && dateStr < reservation.check_out;
+          return (
+            dateStr >= reservation.check_in && dateStr < reservation.check_out
+          );
         });
 
         const approvedReservations = reservations.filter(
@@ -3245,7 +3681,10 @@
         title.innerText = `Detalhes de ${formatShortDateBR(dateStr)}`;
         list.innerHTML = "";
 
-        if (!dayContext.activeBlocks.length && !dayContext.reservations.length) {
+        if (
+          !dayContext.activeBlocks.length &&
+          !dayContext.reservations.length
+        ) {
           list.innerHTML =
             '<div class="calendar-day-detail-item">Dia disponível para reservas.</div>';
           card.classList.remove("hidden");
@@ -3266,7 +3705,9 @@
         });
 
         dayContext.approvedReservations.forEach((reservation) => {
-          const client = escapeHtml(reservation.clients?.full_name || "Hóspede");
+          const client = escapeHtml(
+            reservation.clients?.full_name || "Hóspede",
+          );
           const period = `${formatShortDateBR(reservation.check_in)} → ${formatShortDateBR(reservation.check_out)}`;
           list.innerHTML += `
             <div class="calendar-day-detail-item is-soldout">
@@ -3277,7 +3718,9 @@
         });
 
         dayContext.pendingReservations.forEach((reservation) => {
-          const client = escapeHtml(reservation.clients?.full_name || "Hóspede");
+          const client = escapeHtml(
+            reservation.clients?.full_name || "Hóspede",
+          );
           const period = `${formatShortDateBR(reservation.check_in)} → ${formatShortDateBR(reservation.check_out)}`;
           list.innerHTML += `
             <div class="calendar-day-detail-item is-attention">
@@ -3362,10 +3805,10 @@
               status === "unavailable"
                 ? "is-unavailable"
                 : status === "approved"
-                ? "is-approved"
-                : status === "pending"
-                  ? "is-pending"
-                  : "";
+                  ? "is-approved"
+                  : status === "pending"
+                    ? "is-pending"
+                    : "";
             const dayTitle = escapeHtml(
               getDayTooltipFromContext(getDayContext(dateStr)),
             );
