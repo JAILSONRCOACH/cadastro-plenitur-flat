@@ -1,0 +1,1960 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Formulário do Cliente - Plenitur Flats</title>
+    <link rel="icon" type="image/png" href="public/images/favicon.png" />
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Icons (Lucide) -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- PDF Generation Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Fraunces:wght@500;600;700&display=swap');
+
+        :root {
+            --blue-50: #f3f7ff;
+            --blue-100: #e5edff;
+            --blue-600: #3b6afd;
+            --blue-700: #2f57d8;
+            --green-500: #16a34a;
+            --orange-500: #f59e0b;
+            --ink: #0f172a;
+            --muted: #64748b;
+            --line: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Manrope', sans-serif;
+            color: var(--ink);
+            background: linear-gradient(180deg, #f4f8ff 0%, #f8fbff 45%, #f9fafb 100%);
+        }
+
+        .client-shell {
+            min-height: 100vh;
+            background: radial-gradient(80% 60% at 50% 0%, rgba(59, 106, 253, 0.08), transparent 70%);
+        }
+
+        .client-header {
+            background: #ffffff;
+            border-bottom: 1px solid var(--line);
+            box-shadow: 0 12px 30px -28px rgba(15, 23, 42, 0.35);
+        }
+
+        .client-main {
+            max-width: 60rem;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .client-card {
+            background: #ffffff;
+            border: 1px solid #e3e9f6;
+            border-radius: 28px;
+            box-shadow: 0 30px 70px -55px rgba(15, 23, 42, 0.45);
+            padding: clamp(1.5rem, 3vw, 2.5rem);
+        }
+
+        .headline {
+            font-family: 'Fraunces', serif;
+            font-size: clamp(1.65rem, 1.2rem + 1.4vw, 2.4rem);
+            letter-spacing: -0.02em;
+            color: var(--ink);
+        }
+
+        .section-title {
+            font-family: 'Fraunces', serif;
+            font-size: 1.1rem;
+            color: var(--ink);
+        }
+
+        .client-card .field-label {
+            display: block;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+
+        .client-card input,
+        .client-card select,
+        .client-card textarea {
+            border: 1px solid #d7e2fb;
+            border-radius: 14px;
+            padding: 0.7rem 0.9rem;
+            background: #f7faff;
+            font-size: 0.95rem;
+            color: var(--ink);
+        }
+
+        .client-card input:focus,
+        .client-card select:focus,
+        .client-card textarea:focus {
+            outline: none;
+            border-color: var(--blue-600);
+            box-shadow: 0 0 0 3px rgba(59, 106, 253, 0.15);
+            background: #ffffff;
+        }
+
+        .client-card input[disabled],
+        .client-card select[disabled],
+        .client-card textarea[disabled] {
+            background: #eef2f8;
+            color: #94a3b8;
+        }
+
+        .stepper {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 0.75rem 1rem;
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+
+        .stepper-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stepper-item.is-active {
+            color: var(--blue-700);
+        }
+
+        .stepper-circle {
+            width: 2.25rem;
+            height: 2.25rem;
+            border-radius: 999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            border: 1px solid var(--line);
+            color: var(--muted);
+            background: #ffffff;
+        }
+
+        .stepper-circle.is-active {
+            background: var(--blue-100);
+            border-color: var(--blue-600);
+            color: var(--blue-700);
+            box-shadow: 0 10px 18px -14px rgba(59, 106, 253, 0.6);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.4rem;
+            padding: 0.65rem 1.3rem;
+            border-radius: 14px;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .btn:active {
+            transform: translateY(1px);
+        }
+
+        .btn-primary {
+            background: var(--blue-600);
+            color: #ffffff;
+            box-shadow: 0 16px 24px -18px rgba(59, 106, 253, 0.7);
+        }
+
+        .btn-primary:hover {
+            background: var(--blue-700);
+        }
+
+        .btn-outline {
+            background: #ffffff;
+            border: 1px solid var(--line);
+            color: var(--ink);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--blue-700);
+        }
+
+        .btn-dark {
+            background: #0f172a;
+            color: #ffffff;
+        }
+
+        .btn-success {
+            background: var(--green-500);
+            color: #ffffff;
+        }
+
+        .alert-info {
+            background: #edf2ff;
+            border: 1px solid #dbe4ff;
+            color: #1e3a8a;
+        }
+
+        .alert-warning {
+            background: #fff7ed;
+            border: 1px solid #fed7aa;
+            color: #9a3412;
+        }
+
+        .animate-in.fade-in {
+            animation: fadeUp 0.45s ease-out both;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in.zoom-in {
+            animation: zoomIn 0.45s ease-out both;
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.98);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .animate-in.fade-in {
+                animation: none;
+            }
+
+            .animate-in.zoom-in {
+                animation: none;
+            }
+
+            .btn {
+                transition: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        /* Mock Icons since Lucide React wrapper isn't available in CDN easily */
+        const Icon = ({ name, className }) => {
+            const icons = {
+                search: (
+                    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                ),
+                "file-text": (
+                    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                ),
+                send: (
+                    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                ),
+                check: (
+                    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                )
+            };
+            return icons[name] || <i data-lucide={name} className={className}></i>;
+        };
+
+        /* Supabase Client (singleton) */
+        const SUPABASE_URL = 'https://nsdvyjihggmtbiusqkkp.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zZHZ5amloZ2dtdGJpdXNxa2twIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1NjQ3NzIsImV4cCI6MjA4NjE0MDc3Mn0.KxxvVLFdz8YKL4c5DhUe5t6huIYtkn-YIMNitSM8hRE';
+        const supabase = window.__supabaseClient || (window.__supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+            auth: { storageKey: 'plenitur-client-auth' }
+        }));
+        const N8N_WEBHOOK_URL = 'https://n8n.servmjr.site/webhook/plenitur-contrato';
+
+        /* --- COMPONENTS --- */
+
+        const SignaturePad = ({ onEnd, onClear }) => {
+            const canvasRef = React.useRef(null);
+            const [isDrawing, setIsDrawing] = useState(false);
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = '#000000';
+
+                const getPos = (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+                    // Fixed: Account for canvas scaling
+                    const scaleX = canvas.width / rect.width;
+                    const scaleY = canvas.height / rect.height;
+
+                    return {
+                        x: (clientX - rect.left) * scaleX,
+                        y: (clientY - rect.top) * scaleY
+                    };
+                };
+
+                const startDrawing = (e) => {
+                    e.preventDefault();
+                    setIsDrawing(true);
+                    const { x, y } = getPos(e);
+                    ctx.beginPath();
+                    ctx.moveTo(x, y);
+                };
+
+                const draw = (e) => {
+                    if (!isDrawing) return;
+                    e.preventDefault();
+                    const { x, y } = getPos(e);
+                    ctx.lineTo(x, y);
+                    ctx.stroke();
+                };
+
+                const stopDrawing = () => {
+                    if (isDrawing) {
+                        setIsDrawing(false);
+                        const dataUrl = canvas.toDataURL('image/png');
+                        if (onEnd) onEnd(dataUrl);
+                    }
+                };
+
+                canvas.addEventListener('mousedown', startDrawing);
+                canvas.addEventListener('mousemove', draw);
+                canvas.addEventListener('mouseup', stopDrawing);
+                canvas.addEventListener('touchstart', startDrawing, { passive: false });
+                canvas.addEventListener('touchmove', draw, { passive: false });
+                canvas.addEventListener('touchend', stopDrawing);
+
+                return () => {
+                    canvas.removeEventListener('mousedown', startDrawing);
+                    canvas.removeEventListener('mousemove', draw);
+                    canvas.removeEventListener('mouseup', stopDrawing);
+                    canvas.removeEventListener('touchstart', startDrawing);
+                    canvas.removeEventListener('touchmove', draw);
+                    canvas.removeEventListener('touchend', stopDrawing);
+                };
+            }, [isDrawing, onEnd]);
+
+            const clear = () => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                if (onClear) onClear();
+            };
+
+            return (
+                <div className="border-2 border-dashed border-blue-200 rounded-xl bg-white touch-none">
+                    <canvas
+                        ref={canvasRef}
+                        width={600}
+                        height={320}
+                        className="w-full h-40 touch-none"
+                        style={{ width: '100%', height: '160px' }}
+                    />
+                    <button
+                        type="button"
+                        onClick={clear}
+                        className="text-xs text-red-500 underline p-2"
+                    >
+                        Limpar Assinatura
+                    </button>
+                </div>
+            );
+        };
+
+        function ReservationForm({ isEmbedded }) {
+            const [step, setStep] = useState(1);
+            const [loading, setLoading] = useState(false);
+            const [cepLoading, setCepLoading] = useState(false);
+            const [message, setMessage] = useState(null);
+            const [isAdminEdit, setIsAdminEdit] = useState(false);
+            const [editReservationId, setEditReservationId] = useState(null);
+            const [editClientId, setEditClientId] = useState(null);
+            const [existingContractUrl, setExistingContractUrl] = useState(null);
+            const [readyForCalc, setReadyForCalc] = useState(false);
+
+            /* Signature State */
+            const [signatureData, setSignatureData] = useState(null);
+            const [signatureUrl, setSignatureUrl] = useState(null);
+            const [signatureAccepted, setSignatureAccepted] = useState(false);
+            const [isSigning, setIsSigning] = useState(false);
+            const [clientSignatureUrl, setClientSignatureUrl] = useState(null);
+            const [adminSignatureData, setAdminSignatureData] = useState(null);
+            const [adminSignatureUrl, setAdminSignatureUrl] = useState(null);
+            const [existingFinalContractUrl, setExistingFinalContractUrl] = useState(null);
+
+            const initialFormState = {
+                /* Client */
+                full_name: '', cpf: '', rg: '', profession: '',
+                phone: '', email: '',
+                address_zip_code: '', address_street: '', address_number: '',
+                address_district: '', address_city: '', address_state: '',
+
+                /* Reservation */
+                check_in: '', check_in_time: '14:00',
+                check_out: '', check_out_time: '12:00',
+                guests_count: 1,
+
+                /* Financial */
+                total_amount: 0, deposit_amount: 0, deposit_date: '',
+                payment_method: 'Pix',
+                installments: 1,
+                is_paid: 'Não',
+                has_pet: 'Não',
+                notes: '',
+            };
+
+            const [formData, setFormData] = useState(initialFormState);
+
+            /* Reset Form function */
+            const resetForm = () => {
+                setFormData(initialFormState);
+                setSignatureData(null);
+                setSignatureUrl(null);
+                setSignatureAccepted(false);
+                setIsSigning(false);
+                setStep(1);
+                setMessage(null);
+            };
+
+            /* Auto-calculate installments when total, deposit, or installments change */
+            useEffect(() => {
+                if (!readyForCalc) return;
+                const total = parseFloat(formData.total_amount) || 0;
+                const deposit = parseFloat(formData.deposit_amount) || 0;
+                const numRemaining = parseInt(formData.installments) || 0;
+
+                /* Only calculate if we have remaining installments and valid values */
+                if (numRemaining > 0 && total > 0 && deposit > 0) {
+                    const remainingAmount = total - deposit;
+                    const installmentValue = remainingAmount > 0 ? (remainingAmount / numRemaining).toFixed(2) : '0.00';
+
+                    /* Auto-fill installment fields */
+                    const newData = { ...formData };
+
+                    for (let i = 1; i <= numRemaining; i++) {
+                        const fieldName = `parcela${i + 1}`;
+                        newData[fieldName] = installmentValue;
+                    }
+
+                    /* Set ONLY the LAST installment date to check-in date */
+                    const lastParcelaNum = numRemaining + 1;
+                    if (formData.check_in) {
+                        newData[`dataParcela${lastParcelaNum}`] = formData.check_in;
+                    }
+
+                    /* Clear fields that are no longer needed */
+                    for (let i = numRemaining + 1; i <= 12; i++) {
+                        const fieldName = `parcela${i + 1}`;
+                        if (newData[fieldName]) delete newData[fieldName];
+                        const dateFieldName = `dataParcela${i + 1}`;
+                        if (newData[dateFieldName]) delete newData[dateFieldName];
+                    }
+
+                    setFormData(newData);
+                }
+            }, [formData.total_amount, formData.deposit_amount, formData.installments, formData.check_in, readyForCalc]);
+
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [step]);
+
+            useEffect(() => {
+                const params = new URLSearchParams(window.location.search);
+                const editId = params.get('edit') || params.get('id');
+                if (editId) {
+                    setIsAdminEdit(true);
+                    setEditReservationId(editId);
+                    loadReservationForEdit(editId, true);
+                } else {
+                    setReadyForCalc(true);
+                }
+            }, []);
+
+            const notifyParent = (type) => {
+                if (isEmbedded && window.parent && window.parent !== window) {
+                    window.parent.postMessage({ type, reservationId: editReservationId }, '*');
+                }
+            };
+
+            const handleChange = (e) => {
+                let { name, value } = e.target;
+
+                /* Input Masks */
+                if (name === 'cpf') {
+                    value = value.replace(/\D/g, '')
+                        .replace(/(\d{3})(\d)/, '$1.$2')
+                        .replace(/(\d{3})(\d)/, '$1.$2')
+                        .replace(/(\d{3})(\d{1,2})/, '$1-$2')
+                        .replace(/(-\d{2})\d+?$/, '$1');
+                } else if (name === 'phone') {
+                    value = value.replace(/\D/g, '')
+                        .replace(/(\d{2})(\d)/, '($1) $2')
+                        .replace(/(\d{5})(\d)/, '$1-$2')
+                        .replace(/(-\d{4})\d+?$/, '$1');
+                } else if (name === 'address_zip_code') {
+                    value = value.replace(/\D/g, '')
+                        .replace(/(\d{5})(\d)/, '$1-$2')
+                        .replace(/(-\d{3})\d+?$/, '$1');
+                }
+
+                if (name === 'has_pet') {
+                    const petFee = 180;
+                    setFormData(prev => {
+                        let newTotal = parseFloat(prev.total_amount) || 0;
+                        if (value === 'Sim' && prev.has_pet !== 'Sim') {
+                            newTotal += petFee;
+                        } else if (value === 'Não' && prev.has_pet === 'Sim') {
+                            newTotal -= petFee;
+                        }
+                        return { ...prev, has_pet: value, total_amount: newTotal };
+                    });
+                    return;
+                }
+
+                setFormData(prev => ({ ...prev, [name]: value }));
+            };
+
+            const handleCepBlur = async (e) => {
+                if (e && e.preventDefault) e.preventDefault();
+
+                const cep = formData.address_zip_code.replace(/\D/g, '');
+                if (cep.length !== 8) return;
+
+                setCepLoading(true);
+                try {
+                    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                    const data = await response.json();
+
+                    if (!data.erro) {
+                        setFormData(prev => ({
+                            ...prev,
+                            address_street: data.logradouro || '',
+                            address_district: data.bairro || '',
+                            address_city: data.localidade || '',
+                            address_state: data.uf || ''
+                        }));
+                    } else {
+                        console.warn("CEP não encontrado.");
+                    }
+                } catch (error) {
+                    console.error("Erro ao buscar CEP", error);
+                } finally {
+                    setCepLoading(false);
+                }
+            };
+
+            /* Helper: Convert DataURL to Blob */
+            const dataURLtoBlob = (dataURL) => {
+                const arr = dataURL.split(',');
+                const mime = arr[0].match(/:(.*?);/)[1];
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while (n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                return new Blob([u8arr], { type: mime });
+            };
+
+            const createContractContainerFromHtml = (html) => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                doc.querySelectorAll('script').forEach(s => s.remove());
+
+                const container = document.createElement('div');
+                container.style.position = 'absolute';
+                container.style.left = '-9999px';
+                container.style.top = '0';
+                container.style.width = '794px';
+                container.style.background = '#ffffff';
+
+                const styleEl = doc.querySelector('style');
+                if (styleEl) {
+                    const styleNode = document.createElement('style');
+                    const cssText = styleEl.textContent || '';
+                    styleNode.textContent = cssText.replace(/\bbody\b/g, '.contract-body');
+                    container.appendChild(styleNode);
+                }
+
+                const bodyWrapper = document.createElement('div');
+                bodyWrapper.className = 'contract-body';
+                bodyWrapper.innerHTML = doc.body.innerHTML;
+                container.appendChild(bodyWrapper);
+
+                document.body.appendChild(container);
+                return container;
+            };
+
+            const renderContainerToPdfBlob = async (container) => {
+                const canvas = await html2canvas(container, {
+                    scale: 2,
+                    useCORS: true,
+                    backgroundColor: '#ffffff',
+                    windowWidth: 794
+                });
+
+                const pdf = new jspdf.jsPDF('p', 'pt', 'a4');
+                const pageWidthPt = pdf.internal.pageSize.getWidth();
+                const pageHeightPt = pdf.internal.pageSize.getHeight();
+                const pageHeightPx = Math.floor(canvas.width * (pageHeightPt / pageWidthPt));
+
+                let y = 0;
+                let pageIndex = 0;
+
+                while (y < canvas.height) {
+                    const pageCanvas = document.createElement('canvas');
+                    pageCanvas.width = canvas.width;
+                    pageCanvas.height = Math.min(pageHeightPx, canvas.height - y);
+                    const ctx = pageCanvas.getContext('2d');
+                    ctx.drawImage(canvas, 0, -y);
+
+                    const imgData = pageCanvas.toDataURL('image/jpeg', 0.98);
+                    if (pageIndex > 0) pdf.addPage();
+                    const imgHeightPt = (pageCanvas.height * pageWidthPt) / pageCanvas.width;
+                    pdf.addImage(imgData, 'JPEG', 0, 0, pageWidthPt, imgHeightPt);
+
+                    y += pageHeightPx;
+                    pageIndex += 1;
+                }
+
+                const blob = pdf.output('blob');
+                if (container && container.parentNode) {
+                    container.parentNode.removeChild(container);
+                }
+                return blob;
+            };
+
+            const urlToDataUrl = async (url) => {
+                if (!url) return null;
+                const response = await fetch(url);
+                const blob = await response.blob();
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => resolve(reader.result);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            };
+
+            const loadReservationForEdit = async (id, adminEdit = false) => {
+                setLoading(true);
+                setMessage({ type: 'info', text: 'Carregando reserva para edição...' });
+                try {
+                    const { data, error } = await supabase
+                        .from('reservations')
+                        .select('*, clients(*)')
+                        .eq('id', id)
+                        .single();
+
+                    if (error) throw error;
+
+                    const client = data.clients || {};
+                    let paymentDetails = data.payment_details;
+                    if (typeof paymentDetails === 'string') {
+                        try { paymentDetails = JSON.parse(paymentDetails); } catch (e) { paymentDetails = null; }
+                    }
+
+                    const schedule = paymentDetails?.schedule || [];
+                    const numInstallments = data.installments ?? (schedule.length > 0 ? Math.max(schedule.length - 1, 0) : 0);
+
+                    const newData = {
+                        ...initialFormState,
+                        full_name: client.full_name || '',
+                        cpf: client.cpf || '',
+                        rg: client.rg || '',
+                        profession: client.profession || '',
+                        phone: client.phone || '',
+                        email: client.email || '',
+                        address_zip_code: client.address_zip_code || '',
+                        address_street: client.address_street || '',
+                        address_number: client.address_number || '',
+                        address_district: client.address_district || '',
+                        address_city: client.address_city || '',
+                        address_state: client.address_state || '',
+                        check_in: data.check_in || '',
+                        check_in_time: data.check_in_time || '14:00',
+                        check_out: data.check_out || '',
+                        check_out_time: data.check_out_time || '12:00',
+                        guests_count: data.guests_count || 1,
+                        total_amount: data.total_amount || 0,
+                        deposit_amount: data.deposit_amount || 0,
+                        deposit_date: data.deposit_date || '',
+                        payment_method: data.payment_method || 'Pix',
+                        installments: numInstallments,
+                        is_paid: data.deposit_paid ? 'Sim' : 'Não',
+                        has_pet: data.has_pet ? 'Sim' : 'Não',
+                        notes: data.notes || ''
+                    };
+
+                    schedule.forEach((item) => {
+                        if (!item?.parcel) return;
+                        if (item.parcel === 1 && !newData.deposit_date && item.date) {
+                            newData.deposit_date = item.date;
+                        }
+                        if (item.parcel > 1) {
+                            newData[`parcela${item.parcel}`] = item.amount ?? '';
+                            if (item.date) newData[`dataParcela${item.parcel}`] = item.date;
+                        }
+                    });
+
+                    setFormData(newData);
+                    setEditClientId(data.client_id || null);
+                    setExistingContractUrl(data.contract_signed_url || null);
+                    setExistingFinalContractUrl(data.final_contract_url || null);
+                    setAdminSignatureUrl(data.admin_signature_url || null);
+
+                    if (data.signature_url) {
+                        setSignatureUrl(data.signature_url);
+                        setClientSignatureUrl(data.signature_url);
+                        setSignatureAccepted(data.signature_accepted ?? true);
+                        if (!adminEdit) {
+                            const sigData = await urlToDataUrl(data.signature_url).catch(() => null);
+                            if (sigData) setSignatureData(sigData);
+                        }
+                    }
+
+                    setStep(1);
+                    setMessage(null);
+                } catch (e) {
+                    console.error(e);
+                    setMessage({ type: 'error', text: 'Erro ao carregar reserva para edição.' });
+                } finally {
+                    setReadyForCalc(true);
+                    setLoading(false);
+                }
+            };
+
+            const handleSignatureSave = async () => {
+                if (!signatureData) return alert("Por favor, assine no campo indicado.");
+                if (!signatureAccepted) return alert("Por favor, aceite os termos da assinatura.");
+
+                setIsSigning(true);
+                try {
+                    const blob = dataURLtoBlob(signatureData);
+                    const filename = `signature_${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
+
+                    const { data, error } = await supabase.storage
+                        .from('contracts')
+                        .upload(filename, blob);
+
+                    if (error) throw error;
+
+                    const publicUrl = supabase.storage.from('contracts').getPublicUrl(filename).data.publicUrl;
+                    setSignatureUrl(publicUrl);
+                    setMessage({ type: 'success', text: 'Assinatura salva com sucesso!' });
+                    return publicUrl;
+                } catch (error) {
+                    console.error("Erro ao salvar assinatura:", error);
+                    alert("Erro ao salvar assinatura. Tente novamente.");
+                    return null;
+                } finally {
+                    setIsSigning(false);
+                }
+            };
+            const normalizePhone = (value) => (value || '').replace(/\D/g, '');
+            const slugifyName = (value) => (value || '')
+                .normalize('NFD')
+                .replace(/[\u0300-\u036f]/g, '')
+                .replace(/[^a-zA-Z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .toLowerCase();
+
+            const sendWhatsAppViaN8n = async ({ pdfUrl, contractId, clientName, clientPhone, companyPhone, filename, sendToClient, source, checkinDate, checkoutDate }) => {
+                if (!N8N_WEBHOOK_URL || N8N_WEBHOOK_URL.includes('SEU_WEBHOOK_N8N_AQUI')) {
+                    return { success: false, error: 'Webhook do n8n não configurado.' };
+                }
+
+                try {
+                    const response = await fetch(N8N_WEBHOOK_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            contract_id: contractId,
+                            client_name: clientName || '',
+                            client_phone: clientPhone || '',
+                            company_phone: companyPhone || '',
+                            filename,
+                            pdf_url: pdfUrl,
+                            send_to_client: !!sendToClient,
+                            checkin_date: checkinDate || '',
+                            checkout_date: checkoutDate || '',
+                            source
+                        })
+                    });
+
+                    if (!response.ok) {
+                        const errText = await response.text();
+                        throw new Error(errText || 'Falha ao acionar o webhook do n8n');
+                    }
+
+                    return { success: true };
+                } catch (e) {
+                    console.error('Erro ao enviar WhatsApp via n8n:', e);
+                    return { success: false, error: e.message };
+                }
+            };
+
+            const handleSubmit = async (contractPdfUrl = null) => {
+                setLoading(true);
+                setMessage({ type: 'info', text: 'Salvando reserva...' });
+
+                try {
+                    /* Admin Edit: Update existing reservation */
+                    if (isAdminEdit && editReservationId) {
+                        const uploadAdminSignature = async () => {
+                            if (!adminSignatureData) return adminSignatureUrl;
+                            const blob = dataURLtoBlob(adminSignatureData);
+                            const filename = `admin_sig_${Date.now()}_${Math.random().toString(36).substring(7)}.png`;
+                            const { error } = await supabase.storage
+                                .from('contracts')
+                                .upload(filename, blob);
+                            if (error) throw error;
+                            return supabase.storage.from('contracts').getPublicUrl(filename).data.publicUrl;
+                        };
+
+                        const generateFinalPdfForAdmin = async (adminSigUrl) => {
+                            if (!adminSigUrl) return existingFinalContractUrl;
+                            const htmlContent = getContractHTML();
+                            const container = createContractContainerFromHtml(htmlContent);
+
+                            const clientSigUrl = clientSignatureUrl || signatureUrl;
+                            const clientSigData = clientSigUrl ? await urlToDataUrl(clientSigUrl).catch(() => null) : null;
+                            const adminSigData = adminSignatureData || await urlToDataUrl(adminSigUrl).catch(() => null);
+
+                            const lines = container.querySelectorAll('.signature-line');
+                            if (lines.length >= 2) {
+                                const locadorLine = lines[0];
+                                const locatarioLine = lines[1];
+                                if (adminSigData) {
+                                    const img = document.createElement('img');
+                                    img.src = adminSigData;
+                                    img.style.maxHeight = '90px';
+                                    img.style.display = 'block';
+                                    img.style.margin = '0 auto 8px';
+                                    const hr = locadorLine.querySelector('hr');
+                                    locadorLine.insertBefore(img, hr);
+                                }
+                                if (clientSigData) {
+                                    const img = document.createElement('img');
+                                    img.src = clientSigData;
+                                    img.style.maxHeight = '90px';
+                                    img.style.display = 'block';
+                                    img.style.margin = '0 auto 8px';
+                                    const hr = locatarioLine.querySelector('hr');
+                                    locatarioLine.insertBefore(img, hr);
+                                }
+                            }
+
+                            const pdfBlob = await renderContainerToPdfBlob(container);
+                            const safeName = slugifyName(formData.full_name) || 'cliente';
+                            const filename = `final_contract_${safeName}_${editReservationId}_${Date.now()}.pdf`;
+                            const { error } = await supabase.storage
+                                .from('contracts')
+                                .upload(filename, pdfBlob);
+                            if (error) throw error;
+                            const publicUrl = supabase.storage.from('contracts').getPublicUrl(filename).data.publicUrl;
+                            return publicUrl;
+                        };
+
+                        const paymentDetails = { schedule: [] };
+                        const numInstallments = parseInt(formData.installments) || 0;
+                        if (numInstallments > 0) {
+                            paymentDetails.schedule.push({
+                                parcel: 1,
+                                amount: parseFloat(formData.deposit_amount),
+                                date: formData.deposit_date || new Date().toISOString().split('T')[0],
+                                type: 'Deposit'
+                            });
+                            for (let i = 2; i <= numInstallments + 1; i++) {
+                                const valor = parseFloat(formData[`parcela${i}`]) || 0;
+                                const data = formData[`dataParcela${i}`] || null;
+                                paymentDetails.schedule.push({
+                                    parcel: i,
+                                    amount: valor,
+                                    date: data,
+                                    type: 'Installment'
+                                });
+                            }
+                        }
+
+                        if (editClientId) {
+                            const { error: clientUpdateError } = await supabase
+                                .from('clients')
+                                .update({
+                                    full_name: formData.full_name,
+                                    cpf: formData.cpf,
+                                    rg: formData.rg,
+                                    profession: formData.profession,
+                                    phone: formData.phone,
+                                    email: formData.email,
+                                    address_zip_code: formData.address_zip_code,
+                                    address_street: formData.address_street,
+                                    address_number: formData.address_number,
+                                    address_city: formData.address_city,
+                                    address_state: formData.address_state,
+                                    address_district: formData.address_district
+                                })
+                                .eq('id', editClientId);
+
+                            if (clientUpdateError) throw new Error(`Erro Cliente: ${clientUpdateError.message}`);
+                        }
+
+                        let adminSigUrlToSave = adminSignatureUrl;
+                        if (adminSignatureData) {
+                            adminSigUrlToSave = await uploadAdminSignature();
+                            setAdminSignatureUrl(adminSigUrlToSave);
+                        }
+
+                        let finalContractUrlToSave = existingFinalContractUrl;
+                        if (adminSigUrlToSave) {
+                            finalContractUrlToSave = await generateFinalPdfForAdmin(adminSigUrlToSave);
+                            setExistingFinalContractUrl(finalContractUrlToSave);
+                        }
+
+                        const statusValue = adminSigUrlToSave
+                            ? 'approved'
+                            : ((clientSignatureUrl || signatureUrl) ? 'pending_admin_signature' : 'pending');
+
+                        const updatePayload = {
+                            check_in: formData.check_in,
+                            check_in_time: formData.check_in_time,
+                            check_out: formData.check_out,
+                            check_out_time: formData.check_out_time,
+                            guests_count: parseInt(formData.guests_count),
+                            total_amount: parseFloat(formData.total_amount),
+                            deposit_amount: parseFloat(formData.deposit_amount),
+                            deposit_date: formData.deposit_date || null,
+                            payment_method: formData.payment_method,
+                            notes: formData.notes,
+                            installments: numInstallments,
+                            deposit_paid: formData.is_paid === 'Sim',
+                            has_pet: formData.has_pet === 'Sim',
+                            payment_details: paymentDetails,
+                            signature_url: clientSignatureUrl || signatureUrl,
+                            contract_signed_url: contractPdfUrl || existingContractUrl,
+                            signature_accepted: signatureAccepted,
+                            signed_at: new Date().toISOString(),
+                            status: statusValue
+                        };
+
+                        if (adminSigUrlToSave) {
+                            updatePayload.admin_signature_url = adminSigUrlToSave;
+                            updatePayload.final_contract_url = finalContractUrlToSave;
+                            updatePayload.admin_signed_at = new Date().toISOString();
+                        }
+
+                        const { error: resUpdateError } = await supabase
+                            .from('reservations')
+                            .update(updatePayload)
+                            .eq('id', editReservationId);
+
+                        if (resUpdateError) throw new Error(`Erro Reserva: ${resUpdateError.message}`);
+
+                        if (adminSigUrlToSave && finalContractUrlToSave) {
+                            const clientPhone = normalizePhone(formData.phone);
+                            const whatsappResult = await sendWhatsAppViaN8n({
+                                pdfUrl: finalContractUrlToSave,
+                                contractId: editReservationId,
+                                clientName: formData.full_name,
+                                clientPhone,
+                                companyPhone: '',
+                                filename: `Contrato-${editReservationId}.pdf`,
+                                sendToClient: true,
+                                source: 'admin-edit',
+                                checkinDate: formData.check_in,
+                                checkoutDate: formData.check_out
+                            });
+                            if (!whatsappResult.success) {
+                                setMessage({ type: 'error', text: `Reserva atualizada, mas houve erro no WhatsApp: ${whatsappResult.error}` });
+                            }
+                        }
+
+                        setMessage({ type: 'success', text: 'Reserva atualizada com sucesso!' });
+                        setStep(5);
+                        setTimeout(() => notifyParent('admin-edit-saved'), 200);
+                        return;
+                    }
+
+                    /* 1. Upsert Client (Find by CPF or Create) */
+                    const { data: clientData, error: clientError } = await supabase
+                        .from('clients')
+                        .upsert({
+                            full_name: formData.full_name,
+                            cpf: formData.cpf,
+                            rg: formData.rg,
+                            profession: formData.profession,
+                            phone: formData.phone,
+                            email: formData.email,
+                            address_zip_code: formData.address_zip_code,
+                            address_street: formData.address_street,
+                            address_number: formData.address_number,
+                            address_city: formData.address_city,
+                            address_state: formData.address_state
+                        }, { onConflict: 'cpf' })
+                        .select()
+                        .single();
+
+                    if (clientError) throw new Error(`Erro Cliente: ${clientError.message}`);
+
+                    /* Prepare Payment Details JSON */
+                    const paymentDetails = { schedule: [] };
+                    const numInstallments = parseInt(formData.installments) || 0;
+                    if (numInstallments > 0) {
+                        // 1st Installment (Deposit)
+                        paymentDetails.schedule.push({
+                            parcel: 1,
+                            amount: parseFloat(formData.deposit_amount),
+                            date: formData.deposit_date || new Date().toISOString().split('T')[0],
+                            type: 'Deposit'
+                        });
+                        // Remaining
+                        for (let i = 2; i <= numInstallments + 1; i++) {
+                            const valor = parseFloat(formData[`parcela${i}`]) || 0;
+                            const data = formData[`dataParcela${i}`] || null;
+                            paymentDetails.schedule.push({
+                                parcel: i,
+                                amount: valor,
+                                date: data,
+                                type: 'Installment'
+                            });
+                        }
+                    }
+
+                    /* 2. Insert Reservation */
+                    const { data: reservationData, error: resError } = await supabase
+                        .from('reservations')
+                        .insert({
+                            client_id: clientData.id,
+                            check_in: formData.check_in,
+                            check_in_time: formData.check_in_time,
+                            check_out: formData.check_out,
+                            check_out_time: formData.check_out_time,
+                            guests_count: parseInt(formData.guests_count),
+                            total_amount: parseFloat(formData.total_amount),
+                            deposit_amount: parseFloat(formData.deposit_amount),
+                            deposit_date: formData.deposit_date || null,
+                            payment_method: formData.payment_method,
+                            status: 'pending',
+                            notes: formData.notes,
+                            /* New Fields */
+                            installments: numInstallments,
+                            deposit_paid: formData.is_paid === 'Sim',
+                            has_pet: formData.has_pet === 'Sim',
+                            payment_details: paymentDetails,
+                            /* Signature Fields */
+                            signature_url: signatureUrl,
+                            contract_signed_url: contractPdfUrl,
+                            signature_accepted: signatureAccepted,
+                            signed_at: new Date().toISOString()
+                        })
+                        .select()
+                        .single();
+
+                    if (resError) throw new Error(`Erro Reserva: ${resError.message}`);
+
+                    /* 3. Send Webhook */
+                    const payload = {
+                        nome: formData.full_name,
+                        telefone: formData.phone,
+                        email: formData.email,
+                        cpf: formData.cpf,
+                        rg: formData.rg,
+                        profissao: formData.profession,
+                        cep: formData.address_zip_code,
+                        endereco: `${formData.address_street}, ${formData.address_number}, ${formData.address_district}, ${formData.address_city} - ${formData.address_state}`,
+                        dataEntrada: formData.check_in,
+                        horaEntrada: formData.check_in_time,
+                        dataSaida: formData.check_out,
+                        horaSaida: formData.check_out_time,
+                        numPessoas: String(formData.guests_count),
+                        valorTotal: String(formData.total_amount),
+                        formaPagamento: formData.payment_method,
+                        valorReserva: String(formData.deposit_amount),
+                        dataPagamento: formData.deposit_date,
+                        numParcelas: String(formData.installments),
+                        valorPago: formData.is_paid,
+                        ...Array.from({ length: 11 }, (_, i) => i + 2).reduce((acc, i) => {
+                            acc[`parcela${i}`] = formData[`parcela${i}`] || '';
+                            acc[`dataParcela${i}`] = formData[`dataParcela${i}`] || '';
+                            return acc;
+                        }, {})
+                    };
+
+                    await fetch('https://n8n.servmjr.site/webhook/plenitur-contrato', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    setMessage({ type: 'success', text: 'Reserva efetuada! A equipe da Plenitur Flats analisará e concluirá a assinatura.' });
+                    // Move to Success Step
+                    setStep(5);
+
+                } catch (error) {
+                    console.error("Erro no processo", error);
+                    setMessage({ type: 'error', text: `Erro: ${error.message}` });
+                } finally {
+                    setLoading(false);
+                }
+            };
+
+            const getContractHTML = () => {
+                /* Calculate installment details for contract */
+                const numRemaining = parseInt(formData.installments) || 0;
+                const valorRestante = (Number(formData.total_amount) - Number(formData.deposit_amount)).toFixed(2);
+
+                let parcelasTexto = '';
+                if (numRemaining > 0) {
+                    parcelasTexto = `\n\nPARCELAMENTO (CRONOGRAMA):\n\n1ª Parcela (Reserva): R$ ${Number(formData.deposit_amount).toFixed(2)} — paga no ato da reserva`;
+                    for (let i = 2; i <= numRemaining + 1; i++) {
+                        const valor = formData[`parcela${i}`] || '0.00';
+                        const data = formData[`dataParcela${i}`] ? formData[`dataParcela${i}`].split('-').reverse().join('/') : '___/___/______';
+                        parcelasTexto += `\n\n${i}ª Parcela: R$ ${Number(valor).toFixed(2)} — vencimento: ${data}`;
+                    }
+                    parcelasTexto += `\n\nCondição prática (recomendado): a entrega das chaves/check-in fica condicionada à quitação das parcelas vencidas até a data e à comprovação do pagamento.`;
+                }
+
+                const formatDate = (dateStr) => dateStr ? dateStr.split('-').reverse().join('/') : '___/___/______';
+                const endereco = `${formData.address_street}, ${formData.address_number}${formData.address_district ? ', ' + formData.address_district : ''}, ${formData.address_city} - ${formData.address_state}, CEP ${formData.address_zip_code}`;
+
+                const contractHTML = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Contrato de Locação por Temporada<\/title>
+    <style>
+        body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; padding: 40px 60px; max-width: 800px; margin: 0 auto; }
+        h1 { text-align: center; font-size: 16pt; margin-bottom: 30px; text-transform: uppercase; }
+        h2 { font-size: 12pt; margin-top: 25px; margin-bottom: 10px; }
+        p { text-align: justify; margin: 10px 0; }
+        ul { margin: 10px 0 10px 20px; }
+        li { margin: 3px 0; }
+        .signatures { margin-top: 60px; display: flex; justify-content: space-between; }
+        .signature-line { width: 45%; text-align: center; }
+        .signature-line hr { border: none; border-top: 1px solid #000; margin-bottom: 5px; }
+        .highlight { background-color: #ffffcc; padding: 2px 5px; }
+        @media print { body { padding: 20px; } }
+    <\/style>
+<\/head>
+<body>
+    <h1>CONTRATO DE LOCAÇÃO POR TEMPORADA<\/h1>
+
+    <p><strong>LOCADOR:<\/strong> N C DA SILVA - PLENITUR ALUGUEL POR TEMPORADA SERV, inscrita no CNPJ sob nº 09.287.000/0001-99, com sede em Avenida Bahia, 644, Sala C Cx postal 140, Bairro dos Estados, João Pessoa - PB, CEP 58.030-130.<\/p>
+
+    <p><strong>LOCATÁRIO:<\/strong> <span class="highlight">${formData.full_name || '________________________'}<\/span>, inscrito no CPF nº <span class="highlight">${formData.cpf || '___.___.___-__'}<\/span>, RG nº <span class="highlight">${formData.rg || '____________'}<\/span>, profissão <span class="highlight">${formData.profession || '____________'}<\/span>, residente e domiciliado em <span class="highlight">${endereco}<\/span>, e-mail <span class="highlight">${formData.email || '____________'}<\/span>.<\/p>
+
+    <h2>1. OBJETO DO CONTRATO<\/h2>
+    <p>O objeto do presente contrato é a locação temporária do Flat Beach Haus, situado na Av. Gov. Argemiro de Figueiredo, 280 - Jardim Oceania, João Pessoa - PB, 58.037-030. Flat totalmente equipado e possui as seguintes descrições:<\/p>
+    <ul>
+        <li>Uma cama queen, um sofá cama<\/li>
+        <li>Um frigobar, um microondas, um Air fryer<\/li>
+        <li>Uma panela elétrica de arroz, uma cafeteira elétrica<\/li>
+        <li>Um liquidificador, uma sanduicheira elétrica<\/li>
+        <li>Quatro pratos de jantar, quatro pratos de sobremesa, quatro xícaras com pires<\/li>
+        <li>Quatro taças, quatro copos, Talheres, uma faca de cozinha, toalhas de banho<\/li>
+        <li>Toalhas de rosto, lençois para cama e para sofá cama<\/li>
+        <li>Cobertores, seis travesseiros, duas almofadas e uma manta decorativa para sofá<\/li>
+        <li>Um quadro de parede<\/li>
+    <\/ul>
+
+    <h2>2. PRAZO E PERÍODO DE LOCAÇÃO<\/h2>
+    <p>A locação será realizada com início em <strong><span class="highlight">${formatDate(formData.check_in)}<\/span><\/strong> às <strong><span class="highlight">${formData.check_in_time || '14:00'}<\/span><\/strong> e término em <strong><span class="highlight">${formatDate(formData.check_out)}<\/span><\/strong> às <strong><span class="highlight">${formData.check_out_time || '12:00'}<\/span><\/strong>.<\/p>
+
+    <h2>3. VALOR E FORMA DE PAGAMENTO<\/h2>
+    <p>O valor total da locação é de <strong>R$ <span class="highlight">${Number(formData.total_amount).toFixed(2)}<\/span><\/strong>.<\/p>
+
+    <p>O pagamento será realizado de forma parcelada, da seguinte maneira:<\/p>
+    <p>a) <strong>R$ <span class="highlight">${Number(formData.deposit_amount).toFixed(2)}<\/span><\/strong> no ato da reserva (1ª parcela), via Pix (chave e-mail): <strong>neomarlondon@hotmail.com<\/strong>;<\/p>
+    <p>b) o saldo remanescente de <strong>R$ <span class="highlight">${valorRestante}<\/span><\/strong> será pago conforme o cronograma de parcelas abaixo.<\/p>
+
+    ${parcelasTexto ? `<p style="white-space: pre-line;">${parcelasTexto}<\/p>` : ''}
+    <p style="margin-top: 20px;">O valor contratado é referente a locação para o total de <strong><span class="highlight">${formData.guests_count || '1'}<\/span><\/strong> pessoas.<\/p>
+    <p>Será cobrado o valor de R$500,00 (quinhentos reais) a título de caução para sanar qualquer dano que porventura venha ocorrer no flat. Esse valor será depositado no dia da entrada e devolvido na saída do flat.<\/p>
+    ${formData.has_pet === 'Sim' ? `<p><strong>Obs.:<\/strong> Pets só serão aceitos mediante a uma taxa extra de R$180,00 (já inclusa no valor total).<\/p>` : ''}
+
+    <h2>4. RESPONSABILIDADES DO LOCATÁRIO<\/h2>
+    <h3>4.1. Vistoria do imóvel e regras do condomínio:<\/h3>
+    <p>No momento da entrega das chaves, será realizada uma vistoria detalhada do imóvel, a fim de verificar suas condições. Qualquer divergência deverá ser registrada em documento, assinado por ambas as partes.<\/p>
+    
+    <p><strong>RECEPÇÃO<\/strong><\/p>
+    <ul>
+        <li>Check-in e Check-out devem ser feitos na portaria<\/li>
+        <li>Cadastro de biometria facial.<\/li>
+        <li>Não é permitido receber visitas.<\/li>
+    <\/ul>
+
+    <p><strong>GARAGEM<\/strong><\/p>
+    <ul>
+        <li>Vagas rotativas mediante disponibilidade. VAGAS AMARELAS.<\/li>
+        <li>Carregador elétrico (consultar disponibilidade na portaria).<\/li>
+        <li>Não pegue carona na abertura do portão.<\/li>
+    <\/ul>
+
+    <p><strong>LAVANDERIA<\/strong><\/p>
+    <ul>
+        <li>Aberto das 07h às 22h<\/li>
+        <li>Deve-se usar 1 máquina por vez.<\/li>
+        <li>Proibido utilizar sabão em pó.<\/li>
+    <\/ul>
+
+    <p><strong>ACADEMIA<\/strong><\/p>
+    <ul>
+        <li>Aberto das 07h às 22h<\/li>
+        <li>Não solte os pesos bruscamente no chão.<\/li>
+        <li>Mantenha sempre organizada.<\/li>
+    <\/ul>
+
+    <p><strong>SALA DE REUNIÃO / COWORKING<\/strong><\/p>
+    <ul>
+        <li>Aberto das 07h às 22h<\/li>
+        <li>Uso livre por ordem de chegada, sem reserva antecipada.<\/li>
+        <li>Sala climatizada ❄️<\/li>
+    <\/ul>
+
+    <p><strong>BRINQUEDOTECA<\/strong><\/p>
+    <ul>
+        <li>Aberto das 07h às 22h<\/li>
+        <li>Pegar a chave na portaria.<\/li>
+        <li>A criança menor de 12 anos precisa estar acompanhada do responsável.<\/li>
+        <li>Lei Estadual 13.087/2024 – PB<\/li>
+    <\/ul>
+
+    <p><strong>PISCINA E ÁREA GOURMET<\/strong><\/p>
+    <ul>
+        <li>Aberto das 06h às 22h<\/li>
+        <li>Proibido itens de vidro nas mesas do deck.<\/li>
+        <li>Não leve alimentos ou bebidas para as bordas da piscina.<\/li>
+    <\/ul>
+
+    <p><strong>ÁREAS COMUNS / LIXO<\/strong><\/p>
+    <ul>
+        <li>Proibido circular sem camisa e com traje de banho (sunga/biquini).<\/li>
+        <li>Dispensar o lixo nas escadas.<\/li>
+        <li>Proibido fumar em qualquer área do condomínio.<\/li>
+        <li>Horário Acesso Praia: 06h às 20h<\/li>
+    <\/ul>
+
+    <p><strong>RESTAURANTE<\/strong><\/p>
+    <ul>
+        <li>Aberto das 07h às 10h30<\/li>
+        <li>Apenas café da manhã<\/li>
+        <li>Consultar valores no restaurante<\/li>
+    <\/ul>
+
+    <p>Contato: portariabeachhaus@gmail.com | WhatsApp: +55 83 98774-2593<\/p>
+
+    <h3>4.2. Zelo pela Propriedade:<\/h3>
+    <p>O locatário se compromete a zelar pelo imóvel, pelos móveis e pelos equipamentos disponíveis, utilizando-os de maneira adequada. Qualquer dano causado ao imóvel, móveis ou itens decorativos durante o período de locação será de responsabilidade do locatário, devendo este arcar com os custos de reparo ou substituição.<\/p>
+
+    <h2>5. RESCISÃO E CANCELAMENTO<\/h2>
+    <h3>5.1. Cancelamento por parte do Locatário:<\/h3>
+    <ul>
+        <li>Cancelamento com mais de 30 dias de antecedência: Reembolso total do valor da confirmação de reserva.<\/li>
+        <li>Cancelamento entre 7 e 30 dias de antecedência: Reembolso de 50% do valor da confirmação da reserva.<\/li>
+        <li>Cancelamento com menos de 7 dias de antecedência: Não há reembolso do valor da confirmação.<\/li>
+    <\/ul>
+    <p>Em caso de cancelamento por parte do locatário e dentro dos prazos estipulados acima, a locadora terá o prazo de 20 dias úteis para a devolução do valor pago.<\/p>
+
+    <h3>5.2. Cancelamento por parte do Locador:<\/h3>
+    <p>Caso o imóvel se torne indisponível por motivos imprevistos ou problemas estruturais, o locador oferecerá reembolso total ou alternativas de acomodação similar.<\/p>
+
+    <h3>5.3. Política de Alteração de Reservas:<\/h3>
+    <ul>
+        <li>Alterações de datas estão sujeitas à disponibilidade e podem estar sujeitas a taxas adicionais.<\/li>
+        <li>O locatário deve notificar o locador o mais cedo possível sobre qualquer alteração desejada.<\/li>
+        <li>Todas as solicitações de cancelamento ou alteração devem ser feitas por escrito.<\/li>
+    <\/ul>
+
+    <h2>6. CONDIÇÕES GERAIS<\/h2>
+    <ul>
+        <li>Quaisquer reembolsos estão sujeitos a taxas de serviço.<\/li>
+        <li>O imóvel será entregue em perfeitas condições de uso e deve ser devolvido nas mesmas condições de limpeza e conservação.<\/li>
+        <li>Não é permitido realizar eventos ou festas no local sem autorização prévia. Sempre respeitar a Lei do Silêncio.<\/li>
+        <li>É estritamente proibido o uso de drogas ou atividades ilícitas no imóvel.<\/li>
+    <\/ul>
+
+    <h2>7. FORO<\/h2>
+    <p>Fica eleito o foro da comarca de João Pessoa/PB para dirimir quaisquer questões oriundas deste contrato.<\/p>
+
+    <p style="margin-top: 40px;">João Pessoa, ${new Date().toLocaleDateString('pt-BR')}.<\/p>
+
+    <div class="signatures">
+        <div class="signature-line">
+            <hr>
+            <p><strong>Locador<\/strong><br>N C DA SILVA - PLENITUR<\/p>
+        </div>
+        <div class="signature-line">
+            <hr>
+            <p><strong>Locatário<\/strong><br>${formData.full_name || '________________________'}<\/p>
+        </div>
+    </div>
+
+    <script>window.print();<\/script>
+<\/body>
+<\/html>
+`;
+                return contractHTML;
+            };
+
+            const handleViewContract = () => {
+                const contractHTML = getContractHTML();
+                const win = window.open('', '_blank');
+                win.document.write(contractHTML);
+                win.document.close();
+            };
+
+            const handleGeneratePDF = async () => {
+                const signatureSrc = signatureData || signatureUrl;
+                if (!signatureSrc) {
+                    alert('Por favor, confirme sua assinatura antes de enviar.');
+                    return null;
+                }
+
+                setMessage({ type: 'info', text: 'Gerando contrato assinado...' });
+                setLoading(true);
+
+                try {
+                    // 1. Get Contract HTML
+                    const htmlContent = getContractHTML();
+
+                    // 2. Create container from HTML
+                    const container = createContractContainerFromHtml(htmlContent);
+
+                    // 3. Inject Signature into the container
+                    const signatureDiv = document.createElement('div');
+                    signatureDiv.className = 'signatures';
+                    signatureDiv.style.marginTop = '50px';
+                    signatureDiv.style.pageBreakInside = 'avoid';
+
+                    const dateStr = new Date().toLocaleString('pt-BR');
+
+                    signatureDiv.innerHTML = `
+                        <div class="signature-line">
+                            <h3>ASSINATURA ELETRÔNICA</h3>
+                            <p style="font-size: 10px; color: #666; margin-bottom: 10px;">Documento assinado digitalmente</p>
+                            <img src="${signatureSrc}" style="max-height: 80px; display: block; margin: 0 auto;" />
+                            <hr style="width: 50%; margin: 10px auto; border-top: 1px solid #000;" />
+                            <p><strong>${formData.full_name}</strong></p>
+                            <p>CPF: ${formData.cpf}</p>
+                            <p style="font-size: 9px; color: #888; margin-top: 5px;">
+                                Assinado em: ${dateStr}<br/>
+                                IP: ${window.clientIP || 'Registrado no servidor'} | User-Agent: ${navigator.userAgent}
+                            </p>
+                        </div>
+                    `;
+
+                    // FIX: Append directly to container (innerHTML strips html/body tags)
+                    container.appendChild(signatureDiv);
+
+                    // 4. Generate PDF (better layout)
+                    const pdfBlob = await renderContainerToPdfBlob(container);
+
+                    // 5. Upload PDF
+                    const filename = `contract_signed_${Date.now()}.pdf`;
+                    const { data, error } = await supabase.storage
+                        .from('contracts')
+                        .upload(filename, pdfBlob);
+
+                    if (error) throw error;
+
+                    const publicUrl = supabase.storage.from('contracts').getPublicUrl(filename).data.publicUrl;
+                    return publicUrl;
+
+                } catch (error) {
+                    console.error("Erro ao gerar PDF", error);
+                    setMessage({ type: 'error', text: 'Erro ao gerar PDF do contrato.' });
+                    setLoading(false);
+                    return null;
+                }
+            };
+
+            const nextStep = async () => {
+                if (step === 2) {
+                    if (!formData.check_in || !formData.check_out) {
+                        alert("Por favor, selecione as datas de entrada e saída.");
+                        return;
+                    }
+
+                    // Date Validation
+                    const checkInDate = new Date(formData.check_in + 'T00:00:00');
+                    const checkOutDate = new Date(formData.check_out + 'T00:00:00');
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    if (checkInDate < today) {
+                        alert("A data de entrada não pode ser no passado.");
+                        return;
+                    }
+
+                    if (checkOutDate <= checkInDate) {
+                        alert("A data de saída deve ser posterior à data de entrada (mínimo 1 noite).");
+                        return;
+                    }
+
+                    setLoading(true);
+                    try {
+                        // Check overlap: check_in < req_out AND check_out > req_in
+                        let query = supabase
+                            .from('reservations')
+                            .select('*', { count: 'exact', head: true })
+                            .lt('check_in', formData.check_out)
+                            .gt('check_out', formData.check_in);
+
+                        if (isAdminEdit && editReservationId) {
+                            query = query.neq('id', editReservationId);
+                        }
+
+                        const { count, error } = await query;
+
+                        if (error) throw error;
+
+                        if (count > 0) {
+                            alert("Datas indisponíveis! Já existe uma reserva para este período.");
+                            setLoading(false);
+                            return;
+                        }
+                    } catch (e) {
+                        console.error("Erro ao verificar disponibilidade", e);
+                        alert("Erro ao verificar disponibilidade. Tente novamente.");
+                        setLoading(false);
+                        return;
+                    }
+                    setLoading(false);
+                }
+                setStep(s => s + 1);
+            };
+            const prevStep = () => setStep(s => s - 1);
+
+            /* Render Helper for Installments */
+            const renderInstallments = () => {
+                const numRemaining = parseInt(formData.installments) || 0;
+                if (numRemaining < 1) return null;
+
+                const fields = [];
+                /* Generate N fields starting from Parcela 2 */
+                /* NOTE: if formData.installments=1 ("1 Parcelas Restantes"), we need Parcela 2? Assume yes. */
+                for (let i = 1; i <= numRemaining; i++) {
+                    const parcelaNum = i + 1;
+                    fields.push(
+                        <div key={parcelaNum} className="bg-white p-3 rounded-md border border-slate-200 mb-2 animate-in fade-in">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="field-label">Parcela {parcelaNum} (R$)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        className="mt-1 w-full p-2 border rounded-md"
+                                        name={`parcela${parcelaNum}`}
+                                        value={formData[`parcela${parcelaNum}`] || ''}
+                                        onChange={handleChange}
+                                        placeholder="0,00"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="field-label">Data da Parcela {parcelaNum}</label>
+                                    <input
+                                        type="date"
+                                        className="mt-1 w-full p-2 border rounded-md"
+                                        name={`dataParcela${parcelaNum}`}
+                                        value={formData[`dataParcela${parcelaNum}`] || ''}
+                                        onChange={handleChange}
+                                        min={new Date().toISOString().split('T')[0]}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+
+                return (
+                    <div className="mt-6">
+                        <h4 className="text-xs font-semibold text-blue-700 mb-2 uppercase tracking-widest">Detalhes das Parcelas</h4>
+                        <div className="space-y-2">
+                            {fields}
+                        </div>
+                        <div className="mt-3 p-3 alert-warning rounded-md text-sm flex items-start">
+                            <i data-lucide="alert-circle" className="w-5 h-5 mr-2 flex-shrink-0 text-yellow-600"></i>
+                            <span><strong>Atenção:</strong> Por favor, verifique os valores e as datas das parcelas para possíveis correções antes de enviar.</span>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div className="client-card max-w-3xl mx-auto my-6 sm:my-10">
+                    <div className="mb-10 text-center relative">
+                        {isEmbedded && (
+                            <button
+                                type="button"
+                                onClick={() => notifyParent('admin-edit-close')}
+                                className="absolute right-0 top-0 text-xs text-gray-500 hover:text-gray-700"
+                            >
+                                Fechar
+                            </button>
+                        )}
+                        <h2 className="headline">{isAdminEdit ? 'Edição de Reserva (Admin)' : 'Cadastro de Reserva Beach Haus Flat'}</h2>
+                        {isAdminEdit && (
+                            <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200">
+                                Modo Administrador: edição da reserva
+                            </div>
+                        )}
+                        <div className="stepper mt-8">
+                            {[1, 2, 3].map(i => (
+                                <div key={i} className={`stepper-item ${step >= i ? 'is-active' : ''}`}>
+                                    <span className={`stepper-circle ${step >= i ? 'is-active' : ''}`}>{i}</span>
+                                    <span className="hidden sm:inline">{i === 1 ? 'Cliente' : i === 2 ? 'Reserva' : i === 3 ? 'Pagamento' : 'Assinatura'}</span>
+                                    <span className="sm:hidden">{i}</span>
+                                </div>
+                            ))}
+                            <div className={`stepper-item ${step >= 4 ? 'is-active' : ''}`}>
+                                <span className={`stepper-circle ${step >= 4 ? 'is-active' : ''}`}>4</span>
+                                <span className="hidden sm:inline">Assinatura</span>
+                                <span className="sm:hidden">Assinar</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form onSubmit={(e) => e.preventDefault()}>
+                        {/* STEP 1: DADOS PESSOAIS */}
+                        {step === 1 && (
+                            <div className="space-y-4 animate-in fade-in">
+                                <h3 className="section-title">Dados Pessoais</h3>
+                                <div>
+                                    <label className="field-label">Nome Completo *</label>
+                                    <input className="mt-1 w-full p-2 border rounded-md" name="full_name" value={formData.full_name} onChange={handleChange} />
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="field-label">Telefone *</label>
+                                        <input className="mt-1 w-full p-2 border rounded-md" placeholder="(00) 00000-0000" name="phone" value={formData.phone} onChange={handleChange} />
+                                    </div>
+                                    <div>
+                                        <label className="field-label">E-mail *</label>
+                                        <input className="mt-1 w-full p-2 border rounded-md" name="email" value={formData.email} onChange={handleChange} />
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="field-label">CPF *</label>
+                                        <input className="mt-1 w-full p-2 border rounded-md" placeholder="000.000.000-00" name="cpf" value={formData.cpf} onChange={handleChange} />
+                                    </div>
+                                    <div>
+                                        <label className="field-label">RG</label>
+                                        <input className="mt-1 w-full p-2 border rounded-md" name="rg" value={formData.rg} onChange={handleChange} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="field-label">Profissão</label>
+                                    <input className="mt-1 w-full p-2 border rounded-md" name="profession" value={formData.profession} onChange={handleChange} />
+                                </div>
+
+                                <div className="pt-4 border-t">
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <label className="field-label">CEP</label>
+                                            <div className="relative">
+                                                <input
+                                                    name="address_zip_code"
+                                                    value={formData.address_zip_code}
+                                                    onChange={handleChange}
+                                                    onBlur={handleCepBlur}
+                                                    placeholder="00000-000"
+                                                    className="mt-1 w-full p-2 border rounded-md pr-10"
+                                                />
+                                                <button
+                                                    type="button"
+                                                    onClick={handleCepBlur}
+                                                    className="absolute right-2 top-[50%] translate-y-[-40%] p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                                                    title="Buscar Endereço"
+                                                >
+                                                    {cepLoading ? (
+                                                        <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                                                    ) : (
+                                                        <Icon name="search" className="w-5 h-5" />
+                                                    )}
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div className="sm:col-span-2">
+                                            <label className="field-label">Endereço</label>
+                                            <input className="mt-1 w-full p-2 border rounded-md bg-gray-50" name="address_street" value={formData.address_street} onChange={handleChange} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
+                                        <div>
+                                            <label className="field-label">Número</label>
+                                            <input className="mt-1 w-full p-2 border rounded-md" name="address_number" value={formData.address_number} onChange={handleChange} />
+                                        </div>
+                                        <div>
+                                            <label className="field-label">Bairro</label>
+                                            <input className="mt-1 w-full p-2 border rounded-md bg-gray-50" name="address_district" value={formData.address_district} onChange={handleChange} />
+                                        </div>
+                                        <div>
+                                            <label className="field-label">Cidade/UF</label>
+                                            <input className="mt-1 w-full p-2 border rounded-md bg-gray-50" value={`${formData.address_city} /${formData.address_state}`} disabled />
+                                        </div >
+                                    </div >
+                                </div >
+
+                                <div className="flex justify-end pt-4">
+                                    <button onClick={nextStep} className="btn btn-primary">Próximo</button>
+                                </div>
+                            </div >
+                        )
+                        }
+
+                        {/* STEP 2: DADOS DA RESERVA */}
+                        {/* STEP 2: DADOS DA RESERVA */}
+                        {
+                            step === 2 && (
+                                <div className="space-y-4 animate-in fade-in">
+                                    <h3 className="section-title">Dados da Reserva</h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="field-label">Data de Entrada</label>
+                                            <input
+                                                type="date"
+                                                className="mt-1 w-full p-2 border rounded-md"
+                                                name="check_in"
+                                                value={formData.check_in}
+                                                onChange={handleChange}
+                                                min={new Date().toISOString().split('T')[0]}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="field-label">Hora de Entrada</label>
+                                            <input type="time" className="mt-1 w-full p-2 border rounded-md" name="check_in_time" value={formData.check_in_time} onChange={handleChange} />
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="field-label">Data de Saída</label>
+                                            <input
+                                                type="date"
+                                                className="mt-1 w-full p-2 border rounded-md"
+                                                name="check_out"
+                                                value={formData.check_out}
+                                                onChange={handleChange}
+                                                min={formData.check_in ? new Date(new Date(formData.check_in).getTime() + 86400000).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="field-label">Hora de Saída</label>
+                                            <input type="time" className="mt-1 w-full p-2 border rounded-md" name="check_out_time" value={formData.check_out_time} onChange={handleChange} />
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="field-label">Número de Pessoas</label>
+                                        <input type="number" className="mt-1 w-full p-2 border rounded-md" name="guests_count" value={formData.guests_count} onChange={handleChange} />
+                                    </div>
+                                    <div className="flex justify-between pt-4">
+                                        <button onClick={prevStep} className="btn btn-outline">Voltar</button>
+                                        <button onClick={nextStep} className="btn btn-primary">Próximo</button>
+                                    </div>
+                                </div>
+                            )
+                        }
+
+                        {/* STEP 3: PAGAMENTO */}
+                        {
+                            step === 3 && (
+                                <div className="space-y-4 animate-in fade-in">
+                                    <h3 className="section-title">Informações de Pagamento</h3>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div>
+                                            <label className="field-label">Valor Total da Reserva (R$)</label>
+                                            <input type="number" step="0.01" className="mt-1 w-full p-2 border rounded-md text-lg font-bold text-green-700" name="total_amount" value={formData.total_amount} onChange={handleChange} />
+                                        </div>
+                                        <div>
+                                            <label className="field-label">Forma de Pagamento</label>
+                                            <select className="mt-1 w-full p-2 border rounded-md" name="payment_method" value={formData.payment_method} onChange={handleChange}>
+                                                <option value="Pix">Pix</option>
+                                                <option value="Cartão">Cartão</option>
+                                                <option value="Dinheiro">Dinheiro</option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-white border border-slate-200 rounded-md space-y-4">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="field-label">Valor da Reserva (1ª Parcela) (R$)</label>
+                                                <input type="number" step="0.01" className="mt-1 w-full p-2 border rounded-md" name="deposit_amount" value={formData.deposit_amount} onChange={handleChange} />
+                                            </div>
+                                            <div>
+                                                <label className="field-label">Data do Pagamento</label>
+                                                <input type="date" className="mt-1 w-full p-2 border rounded-md" name="deposit_date" value={formData.deposit_date} onChange={handleChange} />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div>
+                                                <label className="field-label">Valor da Reserva Pago?</label>
+                                                <select className="mt-1 w-full p-2 border rounded-md" name="is_paid" value={formData.is_paid} onChange={handleChange}>
+                                                    <option value="Sim">Sim</option>
+                                                    <option value="Não">Não</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label className="field-label">Possui Pet? (+R$180,00)</label>
+                                                <select className="mt-1 w-full p-2 border rounded-md" name="has_pet" value={formData.has_pet} onChange={handleChange}>
+                                                    <option value="Não">Não</option>
+                                                    <option value="Sim">Sim</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                            <div className="col-span-2">
+                                                <label className="field-label">Número de Parcelas Restantes</label>
+                                                <select className="mt-1 w-full p-2 border rounded-md" name="installments" value={formData.installments} onChange={handleChange}>
+                                                    <option value="0">0 (Só Entrada)</option>
+                                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map(n => <option key={n} value={n}>{n}</option>)}
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                        {/* DYNAMIC INSTALLMENTS RENDER */}
+                                        {renderInstallments()}
+                                    </div>
+
+                                    <div className="mt-2">
+                                        <label className="field-label">Chave Pix</label>
+                                        <input className="mt-1 w-full p-2 border rounded-md bg-gray-100 text-gray-600" value="neomarlondon@hotmail.com" disabled />
+                                    </div>
+
+                                    <div className="mt-2">
+                                        <label className="field-label">Observações</label>
+                                        <textarea className="mt-1 w-full p-2 border rounded-md" rows="3" name="notes" value={formData.notes} onChange={handleChange}></textarea>
+                                    </div>
+
+                                    {message && (
+                                        <div className={`p-3 rounded-md text-sm ${message.type === 'success' ? 'bg-green-100 text-green-700' : message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                                            {message.text}
+                                        </div>
+                                    )}
+
+                                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4">
+                                        <button onClick={prevStep} className="btn btn-outline">Voltar</button>
+                                        <div className="flex flex-col sm:flex-row gap-2">
+                                            <button onClick={handleViewContract} className="btn btn-dark">
+                                                <Icon name="file-text" className="w-4 h-4" /> Ver Minuta
+                                            </button>
+                                            <button onClick={nextStep} className="btn btn-primary">
+                                                Avançar para Assinatura <Icon name="arrow-right" className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )
+                        }
+
+                        {/* STEP 4: ASSINATURA */}
+                        {step === 4 && (
+                            <div className="space-y-6 animate-in fade-in">
+                                <h3 className="section-title">Assinatura Digital do Contrato</h3>
+
+                                <div className="alert-info p-4 rounded-md text-sm">
+                                    <p>Por favor, assine abaixo para confirmar sua concordância com os termos do contrato de locação.</p>
+                                    <button
+                                        type="button"
+                                        onClick={handleViewContract}
+                                        className="mt-2 text-blue-700 underline font-semibold flex items-center"
+                                    >
+                                        <Icon name="file-text" className="w-4 h-4 mr-1" /> Ver Minuta do Contrato
+                                    </button>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        {isAdminEdit ? 'Assinatura do Administrador (Locador):' : 'Assinatura do Responsável (Locatário):'}
+                                    </label>
+                                    <SignaturePad
+                                        onEnd={(data) => {
+                                            if (isAdminEdit) {
+                                                setAdminSignatureData(data);
+                                            } else {
+                                                setSignatureData(data);
+                                            }
+                                        }}
+                                        onClear={() => {
+                                            if (isAdminEdit) {
+                                                setAdminSignatureData(null);
+                                                setAdminSignatureUrl(null);
+                                            } else {
+                                                setSignatureData(null);
+                                                setSignatureUrl(null);
+                                            }
+                                        }}
+                                    />
+                                </div>
+
+                                <div className="flex items-start space-x-2 bg-white p-3 rounded-md border border-slate-200">
+                                    <input
+                                        type="checkbox"
+                                        id="accept_terms"
+                                        className="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded"
+                                        checked={signatureAccepted}
+                                        onChange={(e) => setSignatureAccepted(e.target.checked)}
+                                    />
+                                    <label htmlFor="accept_terms" className="text-sm text-gray-600 cursor-pointer select-none">
+                                        Declaro que li e concordo integralmente com este contrato e reconheço a validade desta assinatura eletrônica.
+                                    </label>
+                                </div>
+
+                                {message && (
+                                    <div className={`p-3 rounded-md text-sm ${message.type === 'success' ? 'bg-green-100 text-green-700' : message.type === 'error' ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`}>
+                                        {message.text}
+                                    </div>
+                                )}
+
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 gap-3">
+                                    <button onClick={prevStep} className="btn btn-outline">Voltar</button>
+
+                                    {isAdminEdit ? (
+                                        <button
+                                            onClick={async () => {
+                                                await handleSubmit(existingContractUrl);
+                                            }}
+                                            disabled={loading}
+                                            className="btn btn-success flex-1"
+                                        >
+                                            {loading ? 'Salvando...' : 'Salvar Alterações'} <Icon name="send" className="w-4 h-4 ml-2" />
+                                        </button>
+                                    ) : (
+                                        !signatureUrl ? (
+                                            <button
+                                                onClick={handleSignatureSave}
+                                                disabled={isSigning || !signatureData || !signatureAccepted}
+                                                className={`btn ${!signatureData || !signatureAccepted ? 'bg-gray-400 text-white cursor-not-allowed' : 'btn-primary'}`}
+                                            >
+                                                {isSigning ? 'Salvando...' : 'Confirmar Assinatura'}
+                                            </button>
+                                        ) : (
+                                            <button
+                                                onClick={async () => {
+                                                    const pdfUrl = await handleGeneratePDF();
+                                                    if (pdfUrl) handleSubmit(pdfUrl);
+                                                }}
+                                                disabled={loading}
+                                                className="btn btn-success flex-1"
+                                            >
+                                                {loading ? 'Finalizando...' : 'Concluir e Enviar Reserva'} <Icon name="send" className="w-4 h-4 ml-2" />
+                                            </button>
+                                        )
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* STEP 5: SUCESSO */}
+                        {step === 5 && (
+                            <div className="text-center space-y-6 animate-in zoom-in duration-300 py-10">
+                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Icon name="check" className="w-10 h-10 text-green-600" />
+                                </div>
+                                <h2 className="headline">{isAdminEdit ? 'Alterações Salvas!' : 'Reserva Concluída!'}</h2>
+                                <p className="text-gray-600 max-w-md mx-auto">
+                                    {isAdminEdit ? 'Os dados da reserva foram atualizados com sucesso.' : (
+                                        <>Reserva efetuada com sucesso. Em breve a equipe da Plenitur Flats irá assinar o contrato
+                                        e enviar a versão final para o seu WhatsApp cadastrado.</>
+                                    )}
+                                </p>
+
+                                <div className="p-4 bg-white rounded-md border border-slate-200 max-w-sm mx-auto mt-6">
+                                    <p className="text-sm text-gray-500 mb-2">Resumo da Solicitação:</p>
+                                    {signatureUrl && (
+                                        <a href={signatureUrl} target="_blank" className="block text-blue-600 hover:underline mb-1 text-sm">
+                                            Ver assinatura registrada
+                                        </a>
+                                    )}
+                                    <p className="text-xs text-gray-500">O envio final será feito após a assinatura da Plenitur Flats.</p>
+                                </div>
+
+                                <div className="pt-8">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            if (isEmbedded && isAdminEdit) {
+                                                notifyParent('admin-edit-close');
+                                            } else {
+                                                resetForm();
+                                            }
+                                        }}
+                                        className="btn btn-primary"
+                                    >
+                                        {isAdminEdit ? (isEmbedded ? 'Voltar ao Admin' : 'Voltar ao Formulário') : 'Nova Reserva'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </form >
+                </div >
+            );
+        }
+
+        function App() {
+            const [view, setView] = useState('form');
+            const params = new URLSearchParams(window.location.search);
+            const isEmbedded = params.get('embed') === '1';
+
+            useEffect(() => {
+                lucide.createIcons();
+            }, [view]);
+
+            return (
+                <div className="client-shell flex flex-col">
+                    {!isEmbedded && (
+                        <header className="client-header sticky top-0 z-10">
+                            <div className="max-w-5xl mx-auto px-4 h-20 flex items-center justify-center">
+                                <img src="public/images/logo.png" alt="Plenitur Flats" className="h-14 w-auto object-contain" onError={(e) => e.target.style.display = 'none'} />
+                            </div>
+                        </header>
+                    )}
+                    <main className={`client-main flex-1 px-4 ${isEmbedded ? 'py-4' : 'py-10'}`}>
+                        <ReservationForm isEmbedded={isEmbedded} />
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+
+</html>

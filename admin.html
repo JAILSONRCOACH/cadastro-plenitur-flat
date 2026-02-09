@@ -1,0 +1,2233 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel Administrativo - Plenitur Flats</title>
+    <link rel="icon" href="public/images/logo.png" type="image/png" />
+
+    <!-- Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/date-fns@2.30.0/cdn.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      body {
+        font-family: "Inter", sans-serif;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      @media (min-width: 1024px) {
+        body {
+          overflow: hidden;
+        }
+      }
+
+      .sidebar-link.active {
+        background-color: #eff6ff;
+        color: #2563eb;
+        border-right: 3px solid #2563eb;
+      }
+
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+      }
+    </style>
+  </head>
+
+  <body class="bg-gray-50 text-gray-900 min-h-screen">
+    <!-- LOGIN SCREEN -->
+    <div
+      id="login-screen"
+      class="fixed inset-0 z-50 bg-gray-900 flex items-center justify-center"
+    >
+      <div
+        class="bg-white p-8 rounded-2xl shadow-2xl max-w-md w-full text-center"
+      >
+        <img
+          src="public/images/logo.png"
+          alt="Plenitur Flats"
+          class="h-16 mx-auto mb-6 object-contain"
+        />
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">
+          Acesso Administrativo
+        </h2>
+        <p class="text-gray-500 mb-6">
+          Digite seu email e senha para acessar o painel.
+        </p>
+
+        <form onsubmit="handleLogin(event)" class="space-y-4">
+          <input
+            type="email"
+            id="email-input"
+            placeholder="Email do administrador"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+          />
+          <input
+            type="password"
+            id="password-input"
+            placeholder="Senha de administrador"
+            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition"
+          />
+          <button
+            type="submit"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition shadow-lg"
+          >
+            Entrar
+          </button>
+        </form>
+        <p id="login-error" class="text-red-500 text-sm mt-4 hidden">
+          Email ou senha incorretos. Tente novamente.
+        </p>
+      </div>
+    </div>
+
+    <!-- MAIN APP (Hidden by default) -->
+    <div
+      id="app-content"
+      class="flex flex-col lg:flex-row min-h-screen lg:h-screen hidden"
+    >
+      <!-- SIDEBAR -->
+      <aside
+        id="sidebar"
+        class="fixed lg:static inset-y-0 left-0 w-72 max-w-[85vw] lg:w-64 bg-white border-b lg:border-b-0 lg:border-r border-gray-200 flex flex-col z-30 shadow-lg transform -translate-x-full lg:translate-x-0 transition-transform duration-200"
+      >
+        <div
+          class="h-16 flex items-center justify-center border-b border-gray-100 bg-white"
+        >
+          <img
+            src="public/images/logo.png"
+            alt="Logo"
+            class="h-8 object-contain"
+          />
+        </div>
+
+        <nav class="flex-1 overflow-y-auto py-4 space-y-1">
+          <a
+            href="#"
+            onclick="showSection('dashboard')"
+            id="nav-dashboard"
+            class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition group active"
+          >
+            <i data-lucide="layout-dashboard" class="w-5 h-5 mr-3"></i> Visão
+            Geral
+          </a>
+          <a
+            href="#"
+            onclick="showSection('pending')"
+            id="nav-pending"
+            class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition group"
+          >
+            <i data-lucide="file-signature" class="w-5 h-5 mr-3"></i> Assinar
+            Contratos
+            <span
+              id="pending-badge"
+              class="ml-auto bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full hidden"
+              >0</span
+            >
+          </a>
+          <a
+            href="#"
+            onclick="showSection('calendar')"
+            id="nav-calendar"
+            class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition group"
+          >
+            <i data-lucide="calendar" class="w-5 h-5 mr-3"></i> Calendário
+          </a>
+          <a
+            href="#"
+            onclick="showSection('all-reservations')"
+            id="nav-all"
+            class="sidebar-link flex items-center px-6 py-3 text-gray-600 hover:bg-gray-50 hover:text-blue-600 transition group"
+          >
+            <i data-lucide="list" class="w-5 h-5 mr-3"></i> Todas Reservas
+          </a>
+        </nav>
+
+        <div class="p-4 border-t border-gray-100">
+          <button
+            onclick="logout()"
+            class="flex items-center w-full px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+          >
+            <i data-lucide="log-out" class="w-5 h-5 mr-3"></i> Sair do Sistema
+          </button>
+        </div>
+      </aside>
+
+      <div
+        id="sidebar-overlay"
+        onclick="closeSidebar()"
+        class="fixed inset-0 bg-black/40 z-20 hidden lg:hidden"
+      ></div>
+
+      <!-- CONTENT AREA -->
+      <main
+        class="flex-1 h-full overflow-visible lg:overflow-y-auto bg-slate-50 relative"
+      >
+        <header
+          class="bg-white shadow-sm h-16 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-10 relative"
+        >
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            <button
+              onclick="toggleSidebar()"
+              class="lg:hidden p-2 rounded-lg hover:bg-gray-100 text-gray-600"
+            >
+              <i data-lucide="menu" class="w-5 h-5"></i>
+            </button>
+            <h1
+              id="page-title"
+              class="text-lg sm:text-xl font-bold text-gray-800 hidden"
+            >
+              Visão Geral
+            </h1>
+          </div>
+
+          <div
+            class="absolute left-1/2 -translate-x-1/2 flex flex-col items-center leading-tight"
+          >
+            <img
+              src="public/images/logo.png"
+              alt="Plenitur Flats"
+              class="h-6 object-contain sm:hidden"
+            />
+            <span class="text-sm sm:text-base font-semibold text-gray-700"
+              >Painel Administrativo</span
+            >
+          </div>
+
+          <div class="flex items-center gap-4 flex-1 justify-end">
+            <div class="text-sm text-right hidden sm:block">
+              <p class="font-medium text-gray-900">Administrador</p>
+              <p class="text-gray-500 text-xs">Plenitur Flats</p>
+            </div>
+            <div
+              class="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold"
+            >
+              A
+            </div>
+          </div>
+        </header>
+
+        <div class="p-8 max-w-7xl mx-auto">
+          <div class="mb-6">
+            <h2
+              id="page-title-inline"
+              class="text-lg sm:text-xl font-semibold text-gray-800"
+            >
+              Visão Geral
+            </h2>
+          </div>
+
+          <!-- DASHBOARD VIEW -->
+          <div id="section-dashboard" class="space-y-6 section-view">
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div
+                class="bg-white p-6 rounded-xl shadow-sm border border-gray-100"
+              >
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-sm font-medium text-gray-500">
+                      Contratos Pendentes
+                    </p>
+                    <h3
+                      class="text-3xl font-bold text-gray-900 mt-2"
+                      id="stat-pending"
+                    >
+                      0
+                    </h3>
+                  </div>
+                  <div class="p-2 bg-yellow-50 rounded-lg text-yellow-600">
+                    <i data-lucide="alert-circle" class="w-6 h-6"></i>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="bg-white p-6 rounded-xl shadow-sm border border-gray-100"
+              >
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-sm font-medium text-gray-500">
+                      Reservas Este Mês
+                    </p>
+                    <h3
+                      class="text-3xl font-bold text-gray-900 mt-2"
+                      id="stat-month"
+                    >
+                      0
+                    </h3>
+                  </div>
+                  <div class="p-2 bg-blue-50 rounded-lg text-blue-600">
+                    <i data-lucide="calendar-check" class="w-6 h-6"></i>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="bg-white p-6 rounded-xl shadow-sm border border-gray-100"
+              >
+                <div class="flex justify-between items-start">
+                  <div>
+                    <p class="text-sm font-medium text-gray-500">
+                      Faturamento Estimado
+                    </p>
+                    <h3
+                      class="text-3xl font-bold text-gray-900 mt-2"
+                      id="stat-revenue"
+                    >
+                      R$ 0,00
+                    </h3>
+                  </div>
+                  <div class="p-2 bg-green-50 rounded-lg text-green-600">
+                    <i data-lucide="dollar-sign" class="w-6 h-6"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Next Arrivals -->
+            <div
+              class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+            >
+              <div
+                class="p-6 border-b border-gray-100 flex justify-between items-center"
+              >
+                <h3 class="font-bold text-gray-800">Próximos Check-ins</h3>
+                <button
+                  onclick="showSection('all-reservations')"
+                  class="text-sm text-blue-600 hover:underline"
+                >
+                  Ver todos
+                </button>
+              </div>
+              <div class="p-6">
+                <div id="next-arrivals-list" class="space-y-4">
+                  <!-- Injected JS -->
+                  <p class="text-gray-400 text-center">
+                    Nenhum check-in próximo.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PENDING CONTRACTS VIEW -->
+          <div id="section-pending" class="hidden section-view space-y-6">
+            <div
+              class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+            >
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                    <tr>
+                      <th class="px-6 py-4 font-semibold">Cliente</th>
+                      <th class="px-6 py-4 font-semibold">
+                        Check-in / Check-out
+                      </th>
+                      <th class="px-6 py-4 font-semibold">Valor</th>
+                      <th class="px-6 py-4 font-semibold text-right">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    id="pending-table-body"
+                    class="divide-y divide-gray-100 text-sm"
+                  >
+                    <!-- Injected JS -->
+                  </tbody>
+                </table>
+              </div>
+              <div
+                id="pending-empty"
+                class="hidden p-12 text-center text-gray-400"
+              >
+                <i
+                  data-lucide="check-circle"
+                  class="w-12 h-12 mx-auto mb-3 text-green-400"
+                ></i>
+                <p>Tudo certo! Nenhuma assinatura pendente.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- CALENDAR VIEW -->
+          <div id="section-calendar" class="hidden section-view h-full">
+            <div
+              class="bg-white rounded-xl shadow-sm border border-gray-100 p-6"
+            >
+              <div
+                class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6"
+              >
+                <div class="space-y-1">
+                  <h3
+                    class="font-bold text-lg text-gray-800"
+                    id="calendar-month-title"
+                  >
+                    Fevereiro 2026
+                  </h3>
+                  <p class="text-xs text-gray-500">
+                    Filtre por mês e ano para acompanhar as reservas.
+                  </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <div
+                    class="flex items-center rounded-lg border border-gray-200 bg-white overflow-hidden"
+                  >
+                    <button
+                      id="calendar-view-month"
+                      onclick="setCalendarView('month')"
+                      class="px-3 py-2 text-xs font-semibold bg-gray-100 text-gray-800"
+                    >
+                      Mês
+                    </button>
+                    <button
+                      id="calendar-view-year"
+                      onclick="setCalendarView('year')"
+                      class="px-3 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700"
+                    >
+                      Ano
+                    </button>
+                  </div>
+                  <div
+                    id="calendar-month-filter"
+                    class="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2"
+                  >
+                    <label
+                      for="calendar-month-select"
+                      class="text-xs text-gray-500"
+                      >Mês</label
+                    >
+                    <select
+                      id="calendar-month-select"
+                      class="bg-transparent text-sm font-medium text-gray-700 focus:outline-none"
+                    ></select>
+                  </div>
+                  <div
+                    id="calendar-year-filter"
+                    class="flex items-center gap-2 bg-gray-50 border border-gray-100 rounded-lg px-3 py-2"
+                  >
+                    <label
+                      for="calendar-year-select"
+                      class="text-xs text-gray-500"
+                      >Ano</label
+                    >
+                    <select
+                      id="calendar-year-select"
+                      class="bg-transparent text-sm font-medium text-gray-700 focus:outline-none"
+                    ></select>
+                  </div>
+                  <div class="flex items-center gap-1">
+                    <button
+                      onclick="changeMonth(-1)"
+                      class="p-2 hover:bg-gray-100 rounded-lg"
+                    >
+                      <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+                    <button
+                      onclick="changeMonth(1)"
+                      class="p-2 hover:bg-gray-100 rounded-lg"
+                    >
+                      <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div id="calendar-month-view" class="space-y-4">
+                <div class="overflow-x-auto">
+                  <div
+                    class="grid grid-cols-7 gap-px bg-gray-200 rounded-lg overflow-hidden border border-gray-200 min-w-[680px]"
+                  >
+                    <!-- Weekday Headers -->
+                    <div
+                      class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500"
+                    >
+                      Dom
+                    </div>
+                    <div
+                      class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500"
+                    >
+                      Seg
+                    </div>
+                    <div
+                      class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500"
+                    >
+                      Ter
+                    </div>
+                    <div
+                      class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500"
+                    >
+                      Qua
+                    </div>
+                    <div
+                      class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500"
+                    >
+                      Qui
+                    </div>
+                    <div
+                      class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500"
+                    >
+                      Sex
+                    </div>
+                    <div
+                      class="bg-gray-50 p-2 text-center text-xs font-semibold text-gray-500"
+                    >
+                      Sáb
+                    </div>
+
+                    <!-- Calendar Grid (Injected) -->
+                    <div id="calendar-grid" class="contents"></div>
+                  </div>
+                </div>
+
+                <div class="mt-4 flex gap-4 text-xs text-gray-500">
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="w-3 h-3 bg-red-100 border border-red-300 rounded-sm"
+                    ></span>
+                    Aprovado
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="w-3 h-3 bg-yellow-100 border border-yellow-300 rounded-sm"
+                    ></span>
+                    Pendente
+                  </div>
+                </div>
+
+                <div class="mt-6 border-t border-gray-100 pt-6">
+                  <div
+                    class="flex flex-wrap items-center justify-between gap-2 mb-3"
+                  >
+                    <h4 class="text-sm font-semibold text-gray-800">
+                      Relação de clientes do mês
+                    </h4>
+                    <span
+                      id="calendar-list-count"
+                      class="text-xs text-gray-500"
+                    ></span>
+                  </div>
+                  <div id="calendar-list-table" class="space-y-3">
+                    <div class="hidden sm:block overflow-x-auto">
+                      <table class="w-full text-left text-sm">
+                        <thead
+                          class="text-xs uppercase text-gray-500 bg-gray-50"
+                        >
+                          <tr>
+                            <th class="px-4 py-3 font-semibold">Cliente</th>
+                            <th class="px-4 py-3 font-semibold">Período</th>
+                            <th class="px-4 py-3 font-semibold">Valor</th>
+                            <th class="px-4 py-3 font-semibold">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody
+                          id="calendar-reservations-body"
+                          class="divide-y divide-gray-100"
+                        >
+                          <!-- Injected JS -->
+                        </tbody>
+                      </table>
+                    </div>
+                    <div
+                      id="calendar-reservations-cards"
+                      class="sm:hidden space-y-3"
+                    >
+                      <!-- Injected JS -->
+                    </div>
+                  </div>
+                  <div
+                    id="calendar-empty"
+                    class="hidden text-center text-gray-400 text-sm py-6"
+                  >
+                    Nenhuma reserva para este período.
+                  </div>
+                </div>
+              </div>
+
+              <div id="calendar-year-view" class="hidden space-y-4">
+                <div
+                  id="calendar-year-grid"
+                  class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4"
+                >
+                  <!-- Injected JS -->
+                </div>
+                <div class="mt-2 flex gap-4 text-xs text-gray-500">
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="w-3 h-3 bg-red-100 border border-red-300 rounded-sm"
+                    ></span>
+                    Aprovado
+                  </div>
+                  <div class="flex items-center gap-2">
+                    <span
+                      class="w-3 h-3 bg-yellow-100 border border-yellow-300 rounded-sm"
+                    ></span>
+                    Pendente
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ALL RESERVATIONS VIEW -->
+          <div id="section-all-reservations" class="hidden section-view">
+            <div
+              class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+            >
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+                    <tr>
+                      <th class="px-6 py-4 font-semibold">Data</th>
+                      <th class="px-6 py-4 font-semibold">Cliente</th>
+                      <th class="px-6 py-4 font-semibold">Status</th>
+                      <th class="px-6 py-4 font-semibold">Contrato</th>
+                    </tr>
+                  </thead>
+                  <tbody
+                    id="all-table-body"
+                    class="divide-y divide-gray-100 text-sm"
+                  >
+                    <!-- Injected JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <!-- SIGNATURE MODAL -->
+    <div
+      id="signature-modal"
+      class="fixed inset-0 z-[60] bg-black/60 hidden flex items-center justify-center backdrop-blur-sm"
+    >
+      <div
+        class="bg-white rounded-xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden transform transition-all"
+      >
+        <div class="p-6 border-b border-gray-100">
+          <h3 class="text-lg font-bold text-gray-900">Assinar Contrato</h3>
+          <p class="text-sm text-gray-500">
+            Confirme a reserva assinando abaixo.
+          </p>
+        </div>
+        <div class="p-6 bg-gray-50">
+          <div
+            class="bg-white border-2 border-dashed border-gray-300 rounded-xl mb-4 shadow-sm"
+          >
+            <canvas
+              id="signature-pad"
+              class="w-full h-48 cursor-crosshair touch-none"
+            ></canvas>
+          </div>
+          <button
+            onclick="clearSignature()"
+            class="text-sm text-red-500 hover:text-red-700 font-medium w-full text-center"
+          >
+            Limpar Assinatura
+          </button>
+        </div>
+        <div
+          class="p-6 border-t border-gray-100 bg-white flex justify-end gap-3"
+        >
+          <button
+            onclick="closeModal()"
+            class="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-50 font-medium"
+          >
+            Cancelar
+          </button>
+          <button
+            onclick="confirmSignature()"
+            id="btn-confirm-sign"
+            class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 shadow-lg font-medium"
+          >
+            Confirmar Assinatura
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDIT MODAL (IFRAME) -->
+    <div
+      id="edit-modal"
+      class="fixed inset-0 z-[60] bg-black/60 hidden items-center justify-center backdrop-blur-sm p-4"
+    >
+      <div
+        class="bg-white rounded-xl shadow-2xl max-w-5xl w-full overflow-hidden"
+      >
+        <div
+          class="p-4 border-b border-gray-100 flex items-center justify-between"
+        >
+          <h3 class="text-lg font-bold text-gray-900">Editar Reserva</h3>
+          <button
+            onclick="closeEditModal()"
+            class="text-sm text-gray-500 hover:text-gray-700"
+          >
+            Fechar
+          </button>
+        </div>
+        <div class="bg-gray-50">
+          <iframe id="edit-iframe" class="w-full h-[80vh] bg-white"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTRACT PREVIEW MODAL -->
+    <div
+      id="contract-preview-modal"
+      class="fixed inset-0 z-[60] bg-black/60 hidden items-center justify-center backdrop-blur-sm p-4"
+    >
+      <div
+        class="bg-white rounded-xl shadow-2xl max-w-5xl w-full overflow-hidden"
+      >
+        <div
+          class="p-4 border-b border-gray-100 flex items-center justify-between"
+        >
+          <h3
+            id="contract-preview-title"
+            class="text-lg font-bold text-gray-900"
+          >
+            Visualização do Contrato
+          </h3>
+          <div class="flex items-center gap-2">
+            <button
+              onclick="printContractPreview()"
+              class="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm"
+            >
+              Imprimir
+            </button>
+            <button
+              onclick="closeContractPreview()"
+              class="text-sm text-gray-500 hover:text-gray-700"
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+        <div class="bg-gray-50">
+          <iframe
+            id="contract-preview-frame"
+            class="w-full h-[80vh] bg-white"
+          ></iframe>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // --- CONFIGURATION ---
+      const supabaseUrl = "https://nsdvyjihggmtbiusqkkp.supabase.co";
+      const supabaseKey =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5zZHZ5amloZ2dtdGJpdXNxa2twIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA1NjQ3NzIsImV4cCI6MjA4NjE0MDc3Mn0.KxxvVLFdz8YKL4c5DhUe5t6huIYtkn-YIMNitSM8hRE";
+
+      // Fix: Use 'supabaseApp' to avoid conflict with global 'supabase' from CDN
+      const supabaseApp = window.supabase.createClient(
+        supabaseUrl,
+        supabaseKey,
+        {
+          auth: { storageKey: "plenitur-admin-auth" },
+        },
+      );
+        const ADMIN_EMAIL = "pleniturflats@gmail.com";
+        const ADMIN_PASS = "Matheus01";
+        const N8N_WEBHOOK_URL = "https://n8n.servmjr.site/webhook/plenitur-contrato";
+
+      // --- STATE ---
+      let allReservations = [];
+      let currentReservationId = null;
+      let currentEditReservationId = null;
+      let currentDate = new Date();
+      let contractPreviewObjectUrl = null;
+      let signatureCanvas = null;
+      let signatureCtx = null;
+      let signatureDrawing = false;
+      let calendarFiltersInitialized = false;
+      let calendarViewMode = "month";
+      const calendarMonthNames = [
+        "Janeiro",
+        "Fevereiro",
+        "Março",
+        "Abril",
+        "Maio",
+        "Junho",
+        "Julho",
+        "Agosto",
+        "Setembro",
+        "Outubro",
+        "Novembro",
+        "Dezembro",
+      ];
+
+      // --- AUTHENTICATION ---
+      function checkLogin() {
+        const isLogged = localStorage.getItem("admin_logged");
+        if (isLogged === "true") {
+          document.getElementById("login-screen").classList.add("hidden");
+          document.getElementById("app-content").classList.remove("hidden");
+          initDashboard();
+        } else {
+          document.getElementById("login-screen").classList.remove("hidden");
+          document.getElementById("app-content").classList.add("hidden");
+        }
+      }
+
+      function handleLogin(e) {
+        e.preventDefault();
+        const email = document
+          .getElementById("email-input")
+          .value.trim()
+          .toLowerCase();
+        const pass = document.getElementById("password-input").value;
+        if (email === ADMIN_EMAIL && pass === ADMIN_PASS) {
+          localStorage.setItem("admin_logged", "true");
+          checkLogin();
+        } else {
+          document.getElementById("login-error").classList.remove("hidden");
+        }
+      }
+
+      function logout() {
+        localStorage.removeItem("admin_logged");
+        location.reload();
+      }
+
+      // --- NAVIGATION ---
+      let sidebarOpen = false;
+
+      function openSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("sidebar-overlay");
+        if (!sidebar || !overlay) return;
+        sidebar.classList.remove("-translate-x-full");
+        sidebar.classList.add("translate-x-0");
+        overlay.classList.remove("hidden");
+        sidebarOpen = true;
+      }
+
+      function closeSidebar() {
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("sidebar-overlay");
+        if (!sidebar || !overlay) return;
+        sidebar.classList.add("-translate-x-full");
+        sidebar.classList.remove("translate-x-0");
+        overlay.classList.add("hidden");
+        sidebarOpen = false;
+      }
+
+      function toggleSidebar() {
+        if (sidebarOpen) {
+          closeSidebar();
+        } else {
+          openSidebar();
+        }
+      }
+
+      function showSection(sectionId) {
+        // Update UI
+        document
+          .querySelectorAll(".section-view")
+          .forEach((el) => el.classList.add("hidden"));
+        const sectionEl = document.getElementById(`section-${sectionId}`);
+        if (sectionEl) {
+          sectionEl.classList.remove("hidden");
+        } else {
+          console.warn("Seção não encontrada:", sectionId);
+        }
+
+        // Update Active Link
+        document
+          .querySelectorAll(".sidebar-link")
+          .forEach((el) => el.classList.remove("active"));
+        const navMap = {
+          dashboard: "nav-dashboard",
+          pending: "nav-pending",
+          calendar: "nav-calendar",
+          "all-reservations": "nav-all",
+        };
+        const navId = navMap[sectionId] || `nav-${sectionId}`;
+        const navEl = document.getElementById(navId);
+        if (navEl) navEl.classList.add("active");
+
+        // Update Title
+        const titles = {
+          dashboard: "Visão Geral",
+          pending: "Contratos Pendentes",
+          calendar: "Calendário de Reservas",
+          "all-reservations": "Histórico Completo",
+        };
+        const headerTitle = document.getElementById("page-title");
+        if (headerTitle) headerTitle.innerText = titles[sectionId];
+        const inlineTitle = document.getElementById("page-title-inline");
+        if (inlineTitle) inlineTitle.innerText = titles[sectionId];
+
+        if (window.innerWidth < 1024) {
+          closeSidebar();
+        }
+      }
+
+      // --- DATA FETCHING ---
+      async function fetchAllData() {
+        const { data, error } = await supabaseApp
+          .from("reservations")
+          .select(
+            "*, clients(full_name, cpf, rg, profession, phone, email, address_zip_code, address_street, address_number, address_district, address_city, address_state)",
+          )
+          .order("created_at", { ascending: false });
+
+        if (error) {
+          console.error(error);
+          return;
+        }
+        allReservations = data;
+
+        updateStats();
+        renderNextArrivals();
+        renderPendingTable();
+        renderAllTable();
+        renderCalendar();
+      }
+
+      function updateStats() {
+        // Updated Logic: Count any reservation needing admin signature
+        const pendingCount = allReservations.filter(
+          (r) =>
+            !r.admin_signature_url &&
+            (r.contract_signed_url || r.status === "pending_admin_signature"),
+        ).length;
+
+        const currentMonth = new Date().getMonth();
+        const monthCount = allReservations.filter(
+          (r) => new Date(r.created_at).getMonth() === currentMonth,
+        ).length;
+
+        const totalRevenue = allReservations.reduce(
+          (acc, curr) =>
+            acc + (parseFloat(curr.total_amount || curr.total_value) || 0),
+          0,
+        );
+
+        document.getElementById("stat-pending").innerText = pendingCount;
+        document.getElementById("stat-month").innerText = monthCount;
+        document.getElementById("stat-revenue").innerText =
+          new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(totalRevenue);
+
+        // Badge
+        const badge = document.getElementById("pending-badge");
+        if (pendingCount > 0) {
+          badge.innerText = pendingCount;
+          badge.classList.remove("hidden");
+        } else {
+          badge.classList.add("hidden");
+        }
+      }
+
+      // --- RENDERING ---
+      function renderNextArrivals() {
+        // Filter future checkins, sort by date
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const upcoming = allReservations
+          .filter((r) => new Date(r.check_in + "T12:00:00") >= today)
+          .sort((a, b) => new Date(a.check_in) - new Date(b.check_in))
+          .slice(0, 3); // Top 3
+
+        const list = document.getElementById("next-arrivals-list");
+        list.innerHTML = "";
+
+        if (upcoming.length === 0) {
+          list.innerHTML =
+            '<p class="text-gray-400 text-center py-4">Nenhum check-in próximo.</p>';
+          return;
+        }
+
+        upcoming.forEach((res) => {
+          const date = new Date(res.check_in + "T12:00:00").toLocaleDateString(
+            "pt-BR",
+            { day: "2-digit", month: "short" },
+          );
+
+          // Status Logic
+          let statusLabel = "Pendente";
+          let statusClass = "bg-yellow-100 text-yellow-700";
+
+          if (res.admin_signature_url) {
+            statusLabel = "Confirmado";
+            statusClass = "bg-green-100 text-green-700";
+          } else if (res.contract_signed_url) {
+            statusLabel = "Assinado (Cliente)";
+            statusClass = "bg-blue-100 text-blue-700";
+          }
+
+          const canFinalPdf = !!res.admin_signature_url;
+
+          list.innerHTML += `
+                    <div class="flex flex-col sm:flex-row sm:items-center p-3 hover:bg-gray-50 rounded-lg transition border border-gray-100">
+                        <div class="bg-blue-100 text-blue-600 font-bold rounded-lg h-12 w-12 flex flex-col items-center justify-center text-xs leading-tight">
+                            <span class="text-lg">${date.split(" ")[0]}</span>
+                            <span class="uppercase text-[0.6rem]">${date.split(" ")[2]}</span>
+                        </div>
+                        <div class="mt-2 sm:mt-0 sm:ml-4 flex-1 min-w-0">
+                            <p class="font-bold text-gray-900 truncate">${res.clients?.full_name || "Hóspede"}</p>
+                            <p class="text-xs text-gray-500">
+                                Entrada: ${new Date(res.check_in + "T12:00:00").toLocaleDateString("pt-BR")} ·
+                                Saída: ${new Date(res.check_out + "T12:00:00").toLocaleDateString("pt-BR")}
+                            </p>
+                        </div>
+                        <div class="mt-3 sm:mt-0 sm:ml-2 w-full sm:w-auto flex flex-wrap items-center justify-between sm:justify-end gap-2">
+                             <span class="px-2 py-1 ${statusClass} text-xs font-bold rounded-full whitespace-nowrap">${statusLabel}</span>
+                             <button onclick="openContractPreview('${res.id}')" class="text-xs text-blue-600 hover:underline flex items-center gap-1">
+                                 <i data-lucide="file-text" class="w-3 h-3"></i> Visualizar
+                             </button>
+                             <button onclick="openFinalPdf('${res.id}')" ${canFinalPdf ? "" : "disabled"} class="text-xs ${canFinalPdf ? "text-blue-600 hover:underline" : "text-gray-400"}">
+                                 PDF Final
+                             </button>
+                        </div>
+                    </div>
+                `;
+        });
+        lucide.createIcons();
+      }
+
+      function renderPendingTable() {
+        // Logic: Show any reservation missing admin signature, especially if client signed
+        const pending = allReservations.filter(
+          (r) =>
+            !r.admin_signature_url &&
+            (r.contract_signed_url ||
+              r.status === "pending_admin_signature" ||
+              !r.status),
+        );
+
+        const tbody = document.getElementById("pending-table-body");
+        const empty = document.getElementById("pending-empty");
+
+        tbody.innerHTML = "";
+
+        if (pending.length === 0) {
+          empty.classList.remove("hidden");
+          return;
+        }
+        empty.classList.add("hidden");
+
+        pending.forEach((res) => {
+          tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition border-b border-gray-50">
+                        <td class="px-6 py-4">
+                            <p class="font-bold text-gray-900">${res.clients?.full_name}</p>
+                            <p class="text-xs text-gray-400">#${res.id.slice(0, 6)}</p>
+                        </td>
+                        <td class="px-6 py-4 text-gray-600 text-xs">
+                            ${new Date(res.check_in).toLocaleDateString()} <br/> -> ${new Date(res.check_out).toLocaleDateString()}
+                        </td>
+                        <td class="px-6 py-4 font-bold text-gray-700 text-sm">
+                            R$ ${parseFloat(res.total_amount || res.total_value || 0).toFixed(2)}
+                        </td>
+                        <td class="px-6 py-4 text-right flex justify-end items-center gap-2">
+                            <button onclick="openContractPreview('${res.id}')" title="Ver Contrato (Formatado)"
+                                class="p-2 bg-indigo-50 hover:bg-indigo-100 rounded-lg text-indigo-600 transition">
+                                <i data-lucide="file-text" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="openContractPreview('${res.id}', true)" title="Imprimir/Salvar PDF"
+                                class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 transition">
+                                <i data-lucide="printer" class="w-4 h-4"></i>
+                            </button>
+                            ${
+                              res.contract_signed_url
+                                ? `
+                                <a href="${res.contract_signed_url}" download="Contrato_${res.id}.pdf" title="Baixar PDF original"
+                                   class="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-600 transition">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
+                                </a>
+                            `
+                                : ""
+                            }
+                            
+                            <button onclick="editReservation('${res.id}')" title="Editar"
+                                class="p-2 bg-blue-50 hover:bg-blue-100 rounded-lg text-blue-600 transition">
+                                <i data-lucide="edit-2" class="w-4 h-4"></i>
+                            </button>
+
+                            <button onclick="openSignModal('${res.id}')" class="flex items-center gap-2 bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-bold shadow-md hover:bg-green-700 transition">
+                                <i data-lucide="pen-tool" class="w-3 h-3"></i> Assinar
+                            </button>
+                        </td>
+                    </tr>
+                 `;
+        });
+        lucide.createIcons();
+      }
+
+      function editReservation(id) {
+        openEditModal(id);
+      }
+
+      function openEditModal(id) {
+        currentEditReservationId = id;
+        const iframe = document.getElementById("edit-iframe");
+        iframe.src = `cliente.html?edit=${id}&admin=1&embed=1`;
+        document.getElementById("edit-modal").classList.remove("hidden");
+        document.getElementById("edit-modal").classList.add("flex");
+      }
+
+      function closeEditModal() {
+        const iframe = document.getElementById("edit-iframe");
+        iframe.src = "about:blank";
+        document.getElementById("edit-modal").classList.add("hidden");
+        document.getElementById("edit-modal").classList.remove("flex");
+        currentEditReservationId = null;
+      }
+
+      function renderAllTable() {
+        const tbody = document.getElementById("all-table-body");
+        tbody.innerHTML = "";
+
+        allReservations.forEach((res) => {
+          let statusHtml = "";
+          if (res.admin_signature_url) {
+            statusHtml =
+              '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">Aprovado</span>';
+          } else {
+            statusHtml =
+              '<span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-bold">Pendente</span>';
+          }
+
+          tbody.innerHTML += `
+                    <tr>
+                        <td class="px-6 py-4 text-gray-500">${new Date(res.created_at).toLocaleDateString("pt-BR")}</td>
+                        <td class="px-6 py-4 font-medium text-gray-900">${res.clients?.full_name}</td>
+                        <td class="px-6 py-4">${statusHtml}</td>
+                        <td class="px-6 py-4">
+                             <button onclick="openContractPreview('${res.id}')" class="inline-flex items-center gap-1 text-indigo-600 hover:underline text-xs mr-3">
+                                 <i data-lucide="file-text" class="w-3 h-3"></i> Visualizar
+                             </button>
+                             <button onclick="openFinalPdf('${res.id}')" class="text-blue-600 hover:underline text-xs ${res.admin_signature_url ? "" : "opacity-50 cursor-not-allowed"}" ${res.admin_signature_url ? "" : "disabled"}>
+                                 PDF Final
+                             </button>
+                        </td>
+                    </tr>
+                 `;
+        });
+        lucide.createIcons();
+      }
+
+      // --- CONTRACT GENERATION ---
+      function formatDateBR(dateStr) {
+        return dateStr
+          ? dateStr.split("-").reverse().join("/")
+          : "___/___/______";
+      }
+
+      function buildInstallmentsText(res) {
+        let paymentDetails = res.payment_details;
+        if (typeof paymentDetails === "string") {
+          try {
+            paymentDetails = JSON.parse(paymentDetails);
+          } catch (e) {
+            paymentDetails = null;
+          }
+        }
+        const schedule = paymentDetails?.schedule;
+        if (Array.isArray(schedule) && schedule.length > 0) {
+          let text = `\n\nPARCELAMENTO (CRONOGRAMA):`;
+          schedule.forEach((item, index) => {
+            const parcelNum = item.parcel || index + 1;
+            const label =
+              parcelNum === 1
+                ? "1ª Parcela (Reserva)"
+                : `${parcelNum}ª Parcela`;
+            const amount = Number(item.amount || 0).toFixed(2);
+            const date = item.date ? formatDateBR(item.date) : "___/___/______";
+            text += `\n\n${label}: R$ ${amount} — vencimento: ${date}`;
+          });
+          text += `\n\nCondição prática (recomendado): a entrega das chaves/check-in fica condicionada à quitação das parcelas vencidas até a data e à comprovação do pagamento.`;
+          return text;
+        }
+
+        const numRemaining = Number(res.installments) || 0;
+        if (numRemaining > 0) {
+          let text = `\n\nPARCELAMENTO (CRONOGRAMA):\n\n1ª Parcela (Reserva): R$ ${Number(res.deposit_amount || 0).toFixed(2)} — paga no ato da reserva`;
+          for (let i = 2; i <= numRemaining + 1; i++) {
+            text += `\n\n${i}ª Parcela: R$ 0,00 — vencimento: ___/___/______`;
+          }
+          text += `\n\nCondição prática (recomendado): a entrega das chaves/check-in fica condicionada à quitação das parcelas vencidas até a data e à comprovação do pagamento.`;
+          return text;
+        }
+        return "";
+      }
+
+      function buildContractHTML(res, options = {}) {
+        const client = res.clients || {};
+        const endereco = `${client.address_street || "________________________"}, ${client.address_number || "___"}${client.address_district ? ", " + client.address_district : ""}, ${client.address_city || "________________"} - ${client.address_state || "__"}, CEP ${client.address_zip_code || "_____-___"}`;
+        const valorRestante = (
+          Number(res.total_amount || 0) - Number(res.deposit_amount || 0)
+        ).toFixed(2);
+        const parcelasTexto = buildInstallmentsText(res);
+        const hasPet = res.has_pet === true || res.has_pet === "Sim";
+        const clientSignatureUrl = options.clientSignatureUrl || null;
+        const adminSignatureUrl = options.adminSignatureUrl || null;
+        const showSignatures = options.showSignatures !== false;
+        const autoPrint = options.autoPrint === true;
+
+        return `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Contrato de Locação por Temporada</title>
+    <style>
+        @page { size: A4; margin: 20mm; }
+        body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; padding: 40px 60px; max-width: 800px; margin: 0 auto; }
+        h1 { text-align: center; font-size: 16pt; margin-bottom: 30px; text-transform: uppercase; }
+        h2 { font-size: 12pt; margin-top: 25px; margin-bottom: 10px; }
+        p { text-align: justify; margin: 10px 0; }
+        ul { margin: 10px 0 10px 20px; }
+        li { margin: 3px 0; }
+        .signatures { margin-top: 60px; display: flex; justify-content: space-between; gap: 24px; }
+        .signature-line { width: 48%; text-align: center; }
+        .signature-line hr { border: none; border-top: 1px solid #000; margin-bottom: 5px; }
+        .signature-img { max-height: 90px; display: block; margin: 0 auto 8px; }
+        .signature-space { height: 90px; }
+        .highlight { background-color: #ffffcc; padding: 2px 5px; }
+        @media print { body { padding: 20px; } }
+    </style>
+</head>
+<body>
+    <h1>CONTRATO DE LOCAÇÃO POR TEMPORADA</h1>
+
+    <p><strong>LOCADOR:</strong> N C DA SILVA - PLENITUR ALUGUEL POR TEMPORADA SERV, inscrita no CNPJ sob nº 09.287.000/0001-99, com sede em Avenida Bahia, 644, Sala C Cx postal 140, Bairro dos Estados, João Pessoa - PB, CEP 58.030-130.</p>
+
+    <p><strong>LOCATÁRIO:</strong> <span class="highlight">${client.full_name || "________________________"}</span>, inscrito no CPF nº <span class="highlight">${client.cpf || "___.___.___-__"}</span>, RG nº <span class="highlight">${client.rg || "____________"}</span>, profissão <span class="highlight">${client.profession || "____________"}</span>, residente e domiciliado em <span class="highlight">${endereco}</span>, e-mail <span class="highlight">${client.email || "____________"}</span>.</p>
+
+    <h2>1. OBJETO DO CONTRATO</h2>
+    <p>O objeto do presente contrato é a locação temporária do Flat Beach Haus, situado na Av. Gov. Argemiro de Figueiredo, 280 - Jardim Oceania, João Pessoa - PB, 58.037-030. Flat totalmente equipado e possui as seguintes descrições:</p>
+    <ul>
+        <li>Uma cama queen, um sofá cama</li>
+        <li>Um frigobar, um microondas, um Air fryer</li>
+        <li>Uma panela elétrica de arroz, uma cafeteira elétrica</li>
+        <li>Um liquidificador, uma sanduicheira elétrica</li>
+        <li>Quatro pratos de jantar, quatro pratos de sobremesa, quatro xícaras com pires</li>
+        <li>Quatro taças, quatro copos, Talheres, uma faca de cozinha, toalhas de banho</li>
+        <li>Toalhas de rosto, lençois para cama e para sofá cama</li>
+        <li>Cobertores, seis travesseiros, duas almofadas e uma manta decorativa para sofá</li>
+        <li>Um quadro de parede</li>
+    </ul>
+
+    <h2>2. PRAZO E PERÍODO DE LOCAÇÃO</h2>
+    <p>A locação será realizada com início em <strong><span class="highlight">${formatDateBR(res.check_in)}</span></strong> às <strong><span class="highlight">${res.check_in_time || "14:00"}</span></strong> e término em <strong><span class="highlight">${formatDateBR(res.check_out)}</span></strong> às <strong><span class="highlight">${res.check_out_time || "12:00"}</span></strong>.</p>
+
+    <h2>3. VALOR E FORMA DE PAGAMENTO</h2>
+    <p>O valor total da locação é de <strong>R$ <span class="highlight">${Number(res.total_amount || 0).toFixed(2)}</span></strong>.</p>
+
+    <p>O pagamento será realizado de forma parcelada, da seguinte maneira:</p>
+    <p>a) <strong>R$ <span class="highlight">${Number(res.deposit_amount || 0).toFixed(2)}</span></strong> no ato da reserva (1ª parcela), via Pix (chave e-mail): <strong>neomarlondon@hotmail.com</strong>;</p>
+    <p>b) o saldo remanescente de <strong>R$ <span class="highlight">${valorRestante}</span></strong> será pago conforme o cronograma de parcelas abaixo.</p>
+
+    ${parcelasTexto ? `<p style="white-space: pre-line;">${parcelasTexto}</p>` : ""}
+    <p style="margin-top: 20px;">O valor contratado é referente a locação para o total de <strong><span class="highlight">${res.guests_count || "1"}</span></strong> pessoas.</p>
+    <p>Será cobrado o valor de R$500,00 (quinhentos reais) a título de caução para sanar qualquer dano que porventura venha ocorrer no flat. Esse valor será depositado no dia da entrada e devolvido na saída do flat.</p>
+    ${hasPet ? `<p><strong>Obs.:</strong> Pets só serão aceitos mediante a uma taxa extra de R$180,00 (já inclusa no valor total).</p>` : ""}
+
+    <h2>4. RESPONSABILIDADES DO LOCATÁRIO</h2>
+    <h3>4.1. Vistoria do imóvel e regras do condomínio:</h3>
+    <p>No momento da entrega das chaves, será realizada uma vistoria detalhada do imóvel, a fim de verificar suas condições. Qualquer divergência deverá ser registrada em documento, assinado por ambas as partes.</p>
+    
+    <p><strong>RECEPÇÃO</strong></p>
+    <ul>
+        <li>Check-in e Check-out devem ser feitos na portaria</li>
+        <li>Cadastro de biometria facial.</li>
+        <li>Não é permitido receber visitas.</li>
+    </ul>
+
+    <p><strong>GARAGEM</strong></p>
+    <ul>
+        <li>Vagas rotativas mediante disponibilidade. VAGAS AMARELAS.</li>
+        <li>Carregador elétrico (consultar disponibilidade na portaria).</li>
+        <li>Não pegue carona na abertura do portão.</li>
+    </ul>
+
+    <p><strong>LAVANDERIA</strong></p>
+    <ul>
+        <li>Aberto das 07h às 22h</li>
+        <li>Deve-se usar 1 máquina por vez.</li>
+        <li>Proibido utilizar sabão em pó.</li>
+    </ul>
+
+    <p><strong>ACADEMIA</strong></p>
+    <ul>
+        <li>Aberto das 07h às 22h</li>
+        <li>Não solte os pesos bruscamente no chão.</li>
+        <li>Mantenha sempre organizada.</li>
+    </ul>
+
+    <p><strong>SALA DE REUNIÃO / COWORKING</strong></p>
+    <ul>
+        <li>Aberto das 07h às 22h</li>
+        <li>Uso livre por ordem de chegada, sem reserva antecipada.</li>
+        <li>Sala climatizada ❄️</li>
+    </ul>
+
+    <p><strong>BRINQUEDOTECA</strong></p>
+    <ul>
+        <li>Aberto das 07h às 22h</li>
+        <li>Pegar a chave na portaria.</li>
+        <li>A criança menor de 12 anos precisa estar acompanhada do responsável.</li>
+        <li>Lei Estadual 13.087/2024 – PB</li>
+    </ul>
+
+    <p><strong>PISCINA E ÁREA GOURMET</strong></p>
+    <ul>
+        <li>Aberto das 06h às 22h</li>
+        <li>Proibido itens de vidro nas mesas do deck.</li>
+        <li>Não leve alimentos ou bebidas para as bordas da piscina.</li>
+    </ul>
+
+    <p><strong>ÁREAS COMUNS / LIXO</strong></p>
+    <ul>
+        <li>Proibido circular sem camisa e com traje de banho (sunga/biquini).</li>
+        <li>Dispensar o lixo nas escadas.</li>
+        <li>Proibido fumar em qualquer área do condomínio.</li>
+        <li>Horário Acesso Praia: 06h às 20h</li>
+    </ul>
+
+    <p><strong>RESTAURANTE</strong></p>
+    <ul>
+        <li>Aberto das 07h às 10h30</li>
+        <li>Apenas café da manhã</li>
+        <li>Consultar valores no restaurante</li>
+    </ul>
+
+    <p>Contato: portariabeachhaus@gmail.com | WhatsApp: +55 83 98774-2593</p>
+
+    <h3>4.2. Zelo pela Propriedade:</h3>
+    <p>O locatário se compromete a zelar pelo imóvel, pelos móveis e pelos equipamentos disponíveis, utilizando-os de maneira adequada. Qualquer dano causado ao imóvel, móveis ou itens decorativos durante o período de locação será de responsabilidade do locatário, devendo este arcar com os custos de reparo ou substituição.</p>
+
+    <h2>5. RESCISÃO E CANCELAMENTO</h2>
+    <h3>5.1. Cancelamento por parte do Locatário:</h3>
+    <ul>
+        <li>Cancelamento com mais de 30 dias de antecedência: Reembolso total do valor da confirmação de reserva.</li>
+        <li>Cancelamento entre 7 e 30 dias de antecedência: Reembolso de 50% do valor da confirmação da reserva.</li>
+        <li>Cancelamento com menos de 7 dias de antecedência: Não há reembolso do valor da confirmação.</li>
+    </ul>
+    <p>Em caso de cancelamento por parte do locatário e dentro dos prazos estipulados acima, a locadora terá o prazo de 20 dias úteis para a devolução do valor pago.</p>
+
+    <h3>5.2. Cancelamento por parte do Locador:</h3>
+    <p>Caso o imóvel se torne indisponível por motivos imprevistos ou problemas estruturais, o locador oferecerá reembolso total ou alternativas de acomodação similar.</p>
+
+    <h3>5.3. Política de Alteração de Reservas:</h3>
+    <ul>
+        <li>Alterações de datas estão sujeitas à disponibilidade e podem estar sujeitas a taxas adicionais.</li>
+        <li>O locatário deve notificar o locador o mais cedo possível sobre qualquer alteração desejada.</li>
+        <li>Todas as solicitações de cancelamento ou alteração devem ser feitas por escrito.</li>
+    </ul>
+
+    <h2>6. CONDIÇÕES GERAIS</h2>
+    <ul>
+        <li>Quaisquer reembolsos estão sujeitos a taxas de serviço.</li>
+        <li>O imóvel será entregue em perfeitas condições de uso e deve ser devolvido nas mesmas condições de limpeza e conservação.</li>
+        <li>Não é permitido realizar eventos ou festas no local sem autorização prévia. Sempre respeitar a Lei do Silêncio.</li>
+        <li>É estritamente proibido o uso de drogas ou atividades ilícitas no imóvel.</li>
+    </ul>
+
+    <h2>7. FORO</h2>
+    <p>Fica eleito o foro da comarca de João Pessoa/PB para dirimir quaisquer questões oriundas deste contrato.</p>
+
+    <p style="margin-top: 40px;">João Pessoa, ${new Date().toLocaleDateString("pt-BR")}.</p>
+
+    ${
+      showSignatures
+        ? `
+    <div class="signatures">
+        <div class="signature-line">
+            <h3>LOCATÁRIO</h3>
+            ${clientSignatureUrl ? `<img src="${clientSignatureUrl}" class="signature-img" />` : `<div class="signature-space"></div>`}
+            <hr>
+            <p><strong>${client.full_name || "________________________"}</strong></p>
+        </div>
+        <div class="signature-line">
+            <h3>LOCADOR</h3>
+            ${adminSignatureUrl ? `<img src="${adminSignatureUrl}" class="signature-img" />` : `<div class="signature-space"></div>`}
+            <hr>
+            <p><strong>N C DA SILVA - PLENITUR</strong></p>
+        </div>
+    </div>
+    `
+        : ""
+    }
+
+    ${autoPrint ? `<script>window.print();<\/script>` : ""}
+</body>
+</html>
+`;
+      }
+
+      function createContractContainerFromHtml(html) {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, "text/html");
+        doc.querySelectorAll("script").forEach((s) => s.remove());
+
+        const container = document.createElement("div");
+        container.style.position = "absolute";
+        container.style.left = "-9999px";
+        container.style.top = "0";
+        container.style.width = "794px";
+        container.style.background = "#ffffff";
+
+        const styleEl = doc.querySelector("style");
+        if (styleEl) {
+          const styleNode = document.createElement("style");
+          const cssText = styleEl.textContent || "";
+          styleNode.textContent = cssText.replace(
+            /\bbody\b/g,
+            ".contract-body",
+          );
+          container.appendChild(styleNode);
+        }
+
+        const bodyWrapper = document.createElement("div");
+        bodyWrapper.className = "contract-body";
+        bodyWrapper.innerHTML = doc.body.innerHTML;
+        container.appendChild(bodyWrapper);
+
+        document.body.appendChild(container);
+        return container;
+      }
+
+      async function renderContainerToPdfBlob(container) {
+        const canvas = await html2canvas(container, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          windowWidth: 794,
+        });
+
+        const pdf = new jspdf.jsPDF("p", "pt", "a4");
+        const pageWidthPt = pdf.internal.pageSize.getWidth();
+        const pageHeightPt = pdf.internal.pageSize.getHeight();
+        const pageHeightPx = Math.floor(
+          canvas.width * (pageHeightPt / pageWidthPt),
+        );
+
+        let y = 0;
+        let pageIndex = 0;
+
+        while (y < canvas.height) {
+          const pageCanvas = document.createElement("canvas");
+          pageCanvas.width = canvas.width;
+          pageCanvas.height = Math.min(pageHeightPx, canvas.height - y);
+          const ctx = pageCanvas.getContext("2d");
+          ctx.drawImage(canvas, 0, -y);
+
+          const imgData = pageCanvas.toDataURL("image/jpeg", 0.98);
+          if (pageIndex > 0) pdf.addPage();
+          const imgHeightPt =
+            (pageCanvas.height * pageWidthPt) / pageCanvas.width;
+          pdf.addImage(imgData, "JPEG", 0, 0, pageWidthPt, imgHeightPt);
+
+          y += pageHeightPx;
+          pageIndex += 1;
+        }
+
+        const blob = pdf.output("blob");
+        if (container && container.parentNode) {
+          container.parentNode.removeChild(container);
+        }
+        return blob;
+      }
+
+      function openContractPreview(id, autoPrint = false) {
+        const reservation = allReservations.find((r) => r.id === id);
+        if (!reservation) {
+          alert("Reserva não encontrada.");
+          return;
+        }
+        if (contractPreviewObjectUrl) {
+          URL.revokeObjectURL(contractPreviewObjectUrl);
+          contractPreviewObjectUrl = null;
+        }
+        const html = buildContractHTML(reservation, {
+          clientSignatureUrl: reservation.signature_url,
+          adminSignatureUrl: reservation.admin_signature_url,
+          showSignatures: true,
+          autoPrint: false,
+        });
+
+        const frame = document.getElementById("contract-preview-frame");
+        frame.src = "about:blank";
+        frame.onload = () => {
+          if (autoPrint && frame.contentWindow) {
+            frame.contentWindow.print();
+          }
+        };
+        frame.srcdoc = html;
+
+        document.getElementById("contract-preview-title").innerText =
+          "Visualização do Contrato";
+        document
+          .getElementById("contract-preview-modal")
+          .classList.remove("hidden");
+        document.getElementById("contract-preview-modal").classList.add("flex");
+      }
+
+      async function openFinalPdf(id) {
+        const reservation = allReservations.find((r) => r.id === id);
+        if (!reservation) {
+          alert("Reserva não encontrada.");
+          return;
+        }
+        if (!reservation.admin_signature_url) {
+          alert("Contrato ainda não assinado pelo administrador.");
+          return;
+        }
+
+        try {
+          document.getElementById("contract-preview-title").innerText =
+            "Gerando PDF Final...";
+
+          const clientSigData = await urlToDataUrl(
+            reservation.signature_url,
+          ).catch(() => null);
+          const adminSigData = await urlToDataUrl(
+            reservation.admin_signature_url,
+          ).catch(() => null);
+
+          const contractHTML = buildContractHTML(reservation, {
+            clientSignatureUrl: clientSigData || reservation.signature_url,
+            adminSignatureUrl: adminSigData || reservation.admin_signature_url,
+            showSignatures: true,
+          });
+
+          const container = createContractContainerFromHtml(contractHTML);
+          const pdfBlob = await renderContainerToPdfBlob(container);
+
+          const safeName =
+            slugifyName(reservation.clients?.full_name) || "cliente";
+          const filename = `final_contract_${safeName}_${reservation.id}_${Date.now()}.pdf`;
+          const { error } = await supabaseApp.storage
+            .from("contracts")
+            .upload(filename, pdfBlob);
+          if (error) throw error;
+
+          const publicUrl = supabaseApp.storage
+            .from("contracts")
+            .getPublicUrl(filename).data.publicUrl;
+          await supabaseApp
+            .from("reservations")
+            .update({ final_contract_url: publicUrl })
+            .eq("id", reservation.id);
+          await fetchAllData();
+
+          const frame = document.getElementById("contract-preview-frame");
+          frame.src = "about:blank";
+          if (contractPreviewObjectUrl)
+            URL.revokeObjectURL(contractPreviewObjectUrl);
+          contractPreviewObjectUrl = URL.createObjectURL(pdfBlob);
+          frame.srcdoc = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><style>html,body{margin:0;height:100%;}</style></head>
+<body>
+<embed src="${contractPreviewObjectUrl}" type="application/pdf" width="100%" height="100%"/>
+</body>
+</html>`;
+
+          document.getElementById("contract-preview-title").innerText =
+            "PDF Final";
+          document
+            .getElementById("contract-preview-modal")
+            .classList.remove("hidden");
+          document
+            .getElementById("contract-preview-modal")
+            .classList.add("flex");
+        } catch (e) {
+          console.error(e);
+          alert("Erro ao gerar PDF final: " + e.message);
+        }
+      }
+
+      function closeContractPreview() {
+        const frame = document.getElementById("contract-preview-frame");
+        frame.srcdoc = "";
+        frame.src = "about:blank";
+        if (contractPreviewObjectUrl) {
+          URL.revokeObjectURL(contractPreviewObjectUrl);
+          contractPreviewObjectUrl = null;
+        }
+        document
+          .getElementById("contract-preview-modal")
+          .classList.add("hidden");
+        document
+          .getElementById("contract-preview-modal")
+          .classList.remove("flex");
+      }
+
+      function printContractPreview() {
+        const frame = document.getElementById("contract-preview-frame");
+        if (frame && frame.contentWindow) {
+          frame.contentWindow.print();
+        }
+      }
+
+      async function urlToDataUrl(url) {
+        if (!url) return null;
+        const response = await fetch(url);
+        const blob = await response.blob();
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      }
+
+      function normalizePhone(value) {
+        return (value || "").replace(/\D/g, "");
+      }
+
+      function slugifyName(value) {
+        return (value || "")
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-zA-Z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+          .toLowerCase();
+      }
+
+      async function sendWhatsAppViaN8n({
+        pdfUrl,
+        contractId,
+        clientName,
+        clientPhone,
+        companyPhone,
+        filename,
+        sendToClient,
+        source,
+        checkinDate,
+        checkoutDate,
+      }) {
+        if (!N8N_WEBHOOK_URL || N8N_WEBHOOK_URL.includes("SEU_WEBHOOK_N8N_AQUI")) {
+          return { success: false, error: "Webhook do n8n não configurado." };
+        }
+
+        try {
+          const response = await fetch(N8N_WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              contract_id: contractId,
+              client_name: clientName || "",
+              client_phone: clientPhone || "",
+              company_phone: companyPhone || "",
+              filename,
+              pdf_url: pdfUrl,
+              send_to_client: !!sendToClient,
+              checkin_date: checkinDate || "",
+              checkout_date: checkoutDate || "",
+              source,
+            }),
+          });
+
+          if (!response.ok) {
+            const errText = await response.text();
+            throw new Error(errText || "Falha ao acionar o webhook do n8n");
+          }
+
+          return { success: true };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      }
+
+      async function generateFinalContractPdf(res, adminSignatureDataUrl) {
+        if (!adminSignatureDataUrl)
+          throw new Error("Assinatura do administrador ausente.");
+
+        const clientSignatureDataUrl = await urlToDataUrl(res.signature_url);
+        const contractHTML = buildContractHTML(res, {
+          clientSignatureUrl: clientSignatureDataUrl,
+          adminSignatureUrl: adminSignatureDataUrl,
+          showSignatures: true,
+        });
+
+        const container = createContractContainerFromHtml(contractHTML);
+        const pdfBlob = await renderContainerToPdfBlob(container);
+
+        const safeName = slugifyName(res.clients?.full_name) || "cliente";
+        const filename = `final_contract_${safeName}_${res.id}_${Date.now()}.pdf`;
+        const { error } = await supabaseApp.storage
+          .from("contracts")
+          .upload(filename, pdfBlob);
+
+        if (error) throw error;
+
+        const publicUrl = supabaseApp.storage
+          .from("contracts")
+          .getPublicUrl(filename).data.publicUrl;
+        return publicUrl;
+      }
+
+      async function sendFinalContractEmail(
+        reservation,
+        finalContractUrl,
+        adminSignatureUrl,
+        overrideEmail = null,
+        overrideName = null,
+      ) {
+        const email = overrideEmail || reservation.clients?.email;
+        const name = overrideName || reservation.clients?.full_name || "Cliente";
+        if (!email) {
+          return { success: false, error: "Email do cliente não encontrado." };
+        }
+
+        try {
+          const response = await fetch(
+            `${supabaseUrl}/functions/v1/send-contract-email`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${supabaseKey}`,
+              },
+              body: JSON.stringify({
+                email,
+                name,
+                contract_signed_url: finalContractUrl,
+                signature_url: adminSignatureUrl || reservation.signature_url,
+              }),
+            },
+          );
+
+          if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error || "Falha ao enviar email");
+          }
+
+          return { success: true };
+        } catch (e) {
+          return { success: false, error: e.message };
+        }
+      }
+
+      // --- CALENDAR LOGIC ---
+      function getCalendarYears() {
+        const years = new Set();
+        allReservations.forEach((r) => {
+          if (r.check_in)
+            years.add(new Date(r.check_in + "T12:00:00").getFullYear());
+          if (r.check_out)
+            years.add(new Date(r.check_out + "T12:00:00").getFullYear());
+        });
+        years.add(new Date().getFullYear());
+        return Array.from(years).sort((a, b) => a - b);
+      }
+
+      function initCalendarFilters() {
+        const monthSelect = document.getElementById("calendar-month-select");
+        const yearSelect = document.getElementById("calendar-year-select");
+        if (!monthSelect || !yearSelect) return;
+
+        monthSelect.innerHTML = calendarMonthNames
+          .map((name, index) => `<option value="${index}">${name}</option>`)
+          .join("");
+
+        const yearOptions = getCalendarYears();
+        const currentYear = currentDate.getFullYear();
+        if (!yearOptions.includes(currentYear)) yearOptions.push(currentYear);
+        yearOptions.sort((a, b) => a - b);
+        yearSelect.innerHTML = yearOptions
+          .map((year) => `<option value="${year}">${year}</option>`)
+          .join("");
+
+        monthSelect.value = String(currentDate.getMonth());
+        yearSelect.value = String(currentYear);
+
+        if (!calendarFiltersInitialized) {
+          monthSelect.addEventListener("change", () => {
+            currentDate.setMonth(parseInt(monthSelect.value, 10));
+            renderCalendar();
+          });
+          yearSelect.addEventListener("change", () => {
+            currentDate.setFullYear(parseInt(yearSelect.value, 10));
+            renderCalendar();
+          });
+          calendarFiltersInitialized = true;
+        }
+
+        syncCalendarViewControls();
+      }
+
+      function syncCalendarViewControls() {
+        const monthBtn = document.getElementById("calendar-view-month");
+        const yearBtn = document.getElementById("calendar-view-year");
+        const monthFilter = document.getElementById("calendar-month-filter");
+        const monthSelect = document.getElementById("calendar-month-select");
+        const monthView = document.getElementById("calendar-month-view");
+        const yearView = document.getElementById("calendar-year-view");
+
+        if (monthBtn && yearBtn) {
+          if (calendarViewMode === "month") {
+            monthBtn.classList.add("bg-gray-100", "text-gray-800");
+            monthBtn.classList.remove("text-gray-500");
+            yearBtn.classList.remove("bg-gray-100", "text-gray-800");
+            yearBtn.classList.add("text-gray-500");
+          } else {
+            yearBtn.classList.add("bg-gray-100", "text-gray-800");
+            yearBtn.classList.remove("text-gray-500");
+            monthBtn.classList.remove("bg-gray-100", "text-gray-800");
+            monthBtn.classList.add("text-gray-500");
+          }
+        }
+
+        if (monthFilter && monthSelect) {
+          if (calendarViewMode === "year") {
+            monthFilter.classList.add("opacity-60");
+            monthSelect.disabled = true;
+          } else {
+            monthFilter.classList.remove("opacity-60");
+            monthSelect.disabled = false;
+          }
+        }
+
+        if (monthView && yearView) {
+          monthView.classList.toggle("hidden", calendarViewMode === "year");
+          yearView.classList.toggle("hidden", calendarViewMode === "month");
+        }
+      }
+
+      function setCalendarView(mode) {
+        if (mode !== "month" && mode !== "year") return;
+        calendarViewMode = mode;
+        syncCalendarViewControls();
+        renderCalendar();
+      }
+
+      function changeMonth(delta) {
+        if (calendarViewMode === "year") {
+          currentDate.setFullYear(currentDate.getFullYear() + delta);
+        } else {
+          currentDate.setMonth(currentDate.getMonth() + delta);
+        }
+        renderCalendar();
+      }
+
+      function renderCalendar() {
+        initCalendarFilters();
+        const year = currentDate.getFullYear();
+        const month = currentDate.getMonth();
+
+        // Update title
+        if (calendarViewMode === "year") {
+          document.getElementById("calendar-month-title").innerText =
+            `Calendário ${year}`;
+          renderYearCalendar(year);
+          return;
+        }
+
+        document.getElementById("calendar-month-title").innerText =
+          `${calendarMonthNames[month]} ${year}`;
+        renderMonthCalendar(year, month);
+        renderCalendarList(year, month);
+      }
+
+      function renderMonthCalendar(year, month) {
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const grid = document.getElementById("calendar-grid");
+        if (!grid) return;
+        grid.innerHTML = "";
+
+        // Blank days
+        for (let i = 0; i < firstDay; i++) {
+          grid.innerHTML += `<div class="bg-gray-50 h-20 sm:h-24 border-t border-r border-gray-100"></div>`;
+        }
+
+        // Days
+        for (let day = 1; day <= daysInMonth; day++) {
+          const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+
+          const todaysRes = allReservations.filter((r) => {
+            const start = r.check_in;
+            const end = r.check_out;
+            return dateStr >= start && dateStr < end;
+          });
+
+          let content = "";
+          todaysRes.forEach((r) => {
+            const colorClass = r.admin_signature_url
+              ? "bg-red-100 text-red-700 border-red-200"
+              : "bg-yellow-100 text-yellow-700 border-yellow-200";
+            const firstName = r.clients?.full_name
+              ? r.clients.full_name.split(" ")[0]
+              : "Hóspede";
+            content += `<div class="text-[0.6rem] p-1 rounded border mb-1 truncate ${colorClass}">${firstName}</div>`;
+          });
+
+          grid.innerHTML += `
+                    <div class="bg-white h-20 sm:h-24 p-2 border-t border-r border-gray-100 hover:bg-gray-50 transition relative">
+                        <span class="text-xs font-bold text-gray-400 absolute top-2 right-2">${day}</span>
+                        <div class="mt-4 overflow-y-auto max-h-[4rem]">
+                            ${content}
+                        </div>
+                    </div>
+                `;
+        }
+      }
+
+      function getReservationStatusForDate(dateStr) {
+        let hasPending = false;
+        for (const r of allReservations) {
+          if (!r.check_in || !r.check_out) continue;
+          if (dateStr >= r.check_in && dateStr < r.check_out) {
+            if (r.admin_signature_url) return "approved";
+            if (
+              r.contract_signed_url ||
+              r.status === "pending_admin_signature" ||
+              !r.status
+            ) {
+              hasPending = true;
+            }
+          }
+        }
+        return hasPending ? "pending" : null;
+      }
+
+      function renderYearCalendar(year) {
+        const grid = document.getElementById("calendar-year-grid");
+        if (!grid) return;
+        grid.innerHTML = "";
+
+        const weekdayLabels = ["D", "S", "T", "Q", "Q", "S", "S"];
+
+        for (let month = 0; month < 12; month++) {
+          const firstDay = new Date(year, month, 1).getDay();
+          const daysInMonth = new Date(year, month + 1, 0).getDate();
+          let daysHtml = "";
+
+          for (let i = 0; i < firstDay; i++) {
+            daysHtml += `<div class="h-6"></div>`;
+          }
+
+          for (let day = 1; day <= daysInMonth; day++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+            const status = getReservationStatusForDate(dateStr);
+            const dotClass =
+              status === "approved"
+                ? "bg-red-400"
+                : status === "pending"
+                  ? "bg-yellow-400"
+                  : "";
+            const dot = dotClass
+              ? `<span class="mt-0.5 h-1.5 w-1.5 rounded-full ${dotClass}"></span>`
+              : "";
+
+            daysHtml += `
+                        <div class="h-6 flex flex-col items-center justify-center text-[0.6rem] text-gray-500">
+                            ${day}
+                            ${dot}
+                        </div>
+                    `;
+          }
+
+          grid.innerHTML += `
+                    <div class="border border-gray-200 rounded-lg p-3 bg-white">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-semibold text-gray-700">${calendarMonthNames[month]}</span>
+                            <span class="text-[0.6rem] text-gray-400">${year}</span>
+                        </div>
+                        <div class="grid grid-cols-7 gap-y-1 text-[0.55rem] text-gray-400">
+                            ${weekdayLabels.map((label) => `<div class="text-center">${label}</div>`).join("")}
+                        </div>
+                        <div class="grid grid-cols-7 gap-y-1 mt-1">
+                            ${daysHtml}
+                        </div>
+                    </div>
+                `;
+        }
+      }
+
+      function renderCalendarList(year, month) {
+        const tbody = document.getElementById("calendar-reservations-body");
+        const empty = document.getElementById("calendar-empty");
+        const tableWrapper = document.getElementById("calendar-list-table");
+        const countLabel = document.getElementById("calendar-list-count");
+        const cards = document.getElementById("calendar-reservations-cards");
+
+        const monthStart = new Date(year, month, 1);
+        const monthEnd = new Date(year, month + 1, 0);
+
+        const monthReservations = allReservations
+          .filter((r) => {
+            if (!r.check_in || !r.check_out) return false;
+            const start = new Date(r.check_in + "T12:00:00");
+            const end = new Date(r.check_out + "T12:00:00");
+            return start <= monthEnd && end >= monthStart;
+          })
+          .sort((a, b) => new Date(a.check_in) - new Date(b.check_in));
+
+        if (countLabel) {
+          countLabel.textContent = `${monthReservations.length} ${monthReservations.length === 1 ? "reserva" : "reservas"}`;
+        }
+
+        if (!tbody) return;
+        tbody.innerHTML = "";
+        if (cards) {
+          cards.innerHTML = "";
+        }
+
+        if (monthReservations.length === 0) {
+          empty?.classList.remove("hidden");
+          tableWrapper?.classList.add("hidden");
+          return;
+        }
+
+        empty?.classList.add("hidden");
+        tableWrapper?.classList.remove("hidden");
+
+        monthReservations.forEach((res) => {
+          let statusLabel = "Pendente";
+          let statusClass = "bg-yellow-100 text-yellow-700";
+
+          if (res.admin_signature_url) {
+            statusLabel = "Confirmado";
+            statusClass = "bg-green-100 text-green-700";
+          } else if (res.contract_signed_url) {
+            statusLabel = "Assinado (Cliente)";
+            statusClass = "bg-blue-100 text-blue-700";
+          }
+
+          const value = new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(parseFloat(res.total_amount || res.total_value || 0));
+
+          const startDate = new Date(
+            res.check_in + "T12:00:00",
+          ).toLocaleDateString("pt-BR");
+          const endDate = new Date(
+            res.check_out + "T12:00:00",
+          ).toLocaleDateString("pt-BR");
+
+          tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3 font-semibold text-gray-800">${res.clients?.full_name || "Hóspede"}</td>
+                        <td class="px-4 py-3 text-gray-600">${startDate} → ${endDate}</td>
+                        <td class="px-4 py-3 font-semibold text-gray-700">${value}</td>
+                        <td class="px-4 py-3">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full ${statusClass}">${statusLabel}</span>
+                        </td>
+                    </tr>
+                `;
+
+          if (cards) {
+            cards.innerHTML += `
+                        <div class="border border-gray-100 rounded-xl p-4 bg-white shadow-sm">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-sm font-semibold text-gray-800">${res.clients?.full_name || "Hóspede"}</p>
+                                    <p class="text-xs text-gray-500 mt-1">${startDate} → ${endDate}</p>
+                                </div>
+                                <span class="px-2 py-1 text-[0.7rem] font-semibold rounded-full ${statusClass} whitespace-nowrap">${statusLabel}</span>
+                            </div>
+                            <div class="mt-3 text-sm font-semibold text-gray-700">${value}</div>
+                        </div>
+                    `;
+          }
+        });
+      }
+
+      // --- INITIALIZATION ---
+      function initDashboard() {
+        lucide.createIcons();
+        fetchAllData();
+        initSignaturePad();
+      }
+
+      window.addEventListener("message", (event) => {
+        if (!event || !event.data || typeof event.data !== "object") return;
+        if (event.data.type === "admin-edit-saved") {
+          closeEditModal();
+          fetchAllData();
+        }
+        if (event.data.type === "admin-edit-close") {
+          closeEditModal();
+        }
+      });
+
+      // --- SIGNATURE PAD ---
+      function initSignaturePad() {
+        signatureCanvas = document.getElementById("signature-pad");
+        signatureCtx = signatureCanvas.getContext("2d");
+        signatureCtx.strokeStyle = "#111";
+        signatureCtx.lineWidth = 2;
+        signatureCtx.lineCap = "round";
+
+        resizeSignaturePad();
+        window.addEventListener("resize", resizeSignaturePad);
+
+        const start = (e) => {
+          signatureDrawing = true;
+          const { x, y } = getSignaturePos(e);
+          signatureCtx.beginPath();
+          signatureCtx.moveTo(x, y);
+          e.preventDefault();
+        };
+
+        const move = (e) => {
+          if (!signatureDrawing) return;
+          const { x, y } = getSignaturePos(e);
+          signatureCtx.lineTo(x, y);
+          signatureCtx.stroke();
+          e.preventDefault();
+        };
+
+        const end = () => {
+          signatureDrawing = false;
+        };
+
+        signatureCanvas.addEventListener("mousedown", start);
+        signatureCanvas.addEventListener("touchstart", start, {
+          passive: false,
+        });
+        signatureCanvas.addEventListener("mousemove", move);
+        signatureCanvas.addEventListener("touchmove", move, { passive: false });
+        signatureCanvas.addEventListener("mouseup", end);
+        signatureCanvas.addEventListener("touchend", end);
+      }
+
+      function resizeSignaturePad() {
+        if (!signatureCanvas || !signatureCtx) return;
+        const ratio = Math.max(window.devicePixelRatio || 1, 1);
+        const width = signatureCanvas.offsetWidth;
+        const height = signatureCanvas.offsetHeight;
+        signatureCanvas.width = width * ratio;
+        signatureCanvas.height = height * ratio;
+        signatureCtx.setTransform(1, 0, 0, 1, 0, 0);
+        signatureCtx.scale(ratio, ratio);
+        signatureCtx.lineWidth = 2;
+        signatureCtx.lineCap = "round";
+        signatureCtx.strokeStyle = "#111";
+      }
+
+      function getSignaturePos(e) {
+        const rect = signatureCanvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - rect.left, y: clientY - rect.top };
+      }
+
+      function clearSignature() {
+        if (!signatureCanvas || !signatureCtx) return;
+        signatureCtx.clearRect(
+          0,
+          0,
+          signatureCanvas.width,
+          signatureCanvas.height,
+        );
+      }
+
+      function openSignModal(id) {
+        currentReservationId = id;
+        document.getElementById("signature-modal").classList.remove("hidden");
+        setTimeout(() => {
+          resizeSignaturePad();
+          clearSignature();
+        }, 80);
+      }
+
+      function closeModal() {
+        document.getElementById("signature-modal").classList.add("hidden");
+      }
+
+      async function confirmSignature() {
+        if (!currentReservationId) return;
+        const canvas = document.getElementById("signature-pad");
+        const btn = document.getElementById("btn-confirm-sign");
+        const reservation = allReservations.find(
+          (r) => r.id === currentReservationId,
+        );
+
+        btn.innerText = "Processando...";
+        btn.disabled = true;
+
+        try {
+          if (!reservation) {
+            throw new Error("Reserva não encontrada.");
+          }
+
+          const signatureDataUrl = canvas.toDataURL("image/png");
+          const blob = await (await fetch(signatureDataUrl)).blob();
+          const filename = `admin_sig_${currentReservationId}_${Date.now()}.png`;
+
+          const { error } = await supabaseApp.storage
+            .from("contracts")
+            .upload(filename, blob);
+          if (error) throw error;
+
+          const publicUrl = supabaseApp.storage
+            .from("contracts")
+            .getPublicUrl(filename).data.publicUrl;
+
+          const finalContractUrl = await generateFinalContractPdf(
+            reservation,
+            signatureDataUrl,
+          );
+
+          await supabaseApp
+            .from("reservations")
+            .update({
+              admin_signature_url: publicUrl,
+              final_contract_url: finalContractUrl,
+              status: "approved",
+              admin_signed_at: new Date().toISOString(),
+            })
+            .eq("id", currentReservationId);
+
+          const clientPhone = normalizePhone(reservation.clients?.phone);
+          const whatsappResult = await sendWhatsAppViaN8n({
+            pdfUrl: finalContractUrl,
+            contractId: reservation.id,
+            clientName: reservation.clients?.full_name || "",
+            clientPhone,
+            companyPhone: "",
+            filename: `Contrato-${reservation.id}.pdf`,
+            sendToClient: true,
+            source: "admin-sign",
+            checkinDate: reservation.check_in,
+            checkoutDate: reservation.check_out,
+          });
+
+          if (!whatsappResult.success) {
+            alert(
+              `Assinado, mas não foi possível enviar via WhatsApp: ${whatsappResult.error}`,
+            );
+          } else {
+            alert("Assinado e enviado via WhatsApp para cliente e Plenitur!");
+          }
+
+          closeModal();
+          fetchAllData(); // Refresh
+        } catch (e) {
+          alert("Erro: " + e.message);
+          console.error(e);
+        } finally {
+          btn.innerText = "Confirmar Assinatura";
+          btn.disabled = false;
+        }
+      }
+
+      // Auto-run
+      checkLogin();
+    </script>
+  </body>
+</html>
