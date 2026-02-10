@@ -251,6 +251,76 @@
         color: #9a3412;
       }
 
+      .mobile-actions {
+        position: relative;
+      }
+
+      .contract-modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.62);
+        z-index: 60;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+
+      .contract-modal-shell {
+        width: min(980px, 100%);
+        height: min(92dvh, 920px);
+        background: #ffffff;
+        border-radius: 20px;
+        border: 1px solid #dbe5f5;
+        box-shadow: 0 30px 60px -35px rgba(15, 23, 42, 0.7);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .contract-modal-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e2e8f0;
+        background: #f8fbff;
+      }
+
+      .contract-modal-title {
+        font-weight: 700;
+        color: var(--ink);
+      }
+
+      .contract-modal-actions {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .contract-modal-btn {
+        border-radius: 999px;
+        border: 1px solid #c6d4ee;
+        padding: 0.45rem 0.8rem;
+        font-size: 0.84rem;
+        font-weight: 600;
+        color: #1e3a8a;
+        background: #ffffff;
+      }
+
+      .contract-modal-btn.is-primary {
+        background: var(--blue-600);
+        color: #ffffff;
+        border-color: var(--blue-600);
+      }
+
+      .contract-modal-iframe {
+        border: 0;
+        width: 100%;
+        height: 100%;
+        background: #ffffff;
+      }
+
       .animate-in.fade-in {
         animation: fadeUp 0.45s ease-out both;
       }
@@ -315,6 +385,50 @@
 
         .btn {
           font-size: 1rem;
+        }
+
+        .mobile-actions {
+          position: sticky;
+          bottom: 0;
+          z-index: 20;
+          padding-top: 0.75rem;
+          padding-bottom: calc(0.55rem + env(safe-area-inset-bottom));
+          margin-top: 0.75rem;
+          background: linear-gradient(
+            180deg,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.96) 26%,
+            #ffffff 52%
+          );
+        }
+
+        .mobile-actions .btn {
+          flex: 1;
+        }
+
+        .contract-modal-backdrop {
+          padding: 0;
+        }
+
+        .contract-modal-shell {
+          width: 100%;
+          height: 100dvh;
+          border-radius: 0;
+          border: none;
+          box-shadow: none;
+        }
+
+        .contract-modal-header {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        .contract-modal-actions {
+          width: 100%;
+        }
+
+        .contract-modal-btn {
+          flex: 1;
         }
 
         .text-xs {
@@ -414,6 +528,22 @@
         ));
       const N8N_WEBHOOK_URL =
         "https://n8n.servmjr.site/webhook/plenitur-contrato";
+      const FORM_DRAFT_KEY = "plenitur-client-form-draft-v1";
+      const padDate = (v) => String(v).padStart(2, "0");
+      const toLocalIsoDate = (dateInput) => {
+        const date = dateInput instanceof Date ? dateInput : new Date(dateInput);
+        if (Number.isNaN(date.getTime())) return "";
+        return `${date.getFullYear()}-${padDate(date.getMonth() + 1)}-${padDate(date.getDate())}`;
+      };
+      const getTodayLocalIso = () => toLocalIsoDate(new Date());
+      const addDaysToIsoDate = (isoDate, days) => {
+        if (!isoDate) return "";
+        const [year, month, day] = String(isoDate).split("-").map(Number);
+        if (!year || !month || !day) return "";
+        const date = new Date(year, month - 1, day);
+        date.setDate(date.getDate() + days);
+        return toLocalIsoDate(date);
+      };
 
       /* --- COMPONENTS --- */
 
@@ -534,6 +664,10 @@
         const [adminSignatureUrl, setAdminSignatureUrl] = useState(null);
         const [existingFinalContractUrl, setExistingFinalContractUrl] =
           useState(null);
+        const [isContractModalOpen, setIsContractModalOpen] = useState(false);
+        const [contractPreviewHtml, setContractPreviewHtml] = useState("");
+        const queryParams = new URLSearchParams(window.location.search);
+        const editIdFromQuery = queryParams.get("edit") || queryParams.get("id");
 
         const initialFormState = {
           /* Client */
@@ -552,7 +686,7 @@
 
           /* Reservation */
           check_in: "",
-          check_in_time: "14:00",
+          check_in_time: "15:00",
           check_out: "",
           check_out_time: "12:00",
           guests_count: 1,
@@ -570,6 +704,14 @@
 
         const [formData, setFormData] = useState(initialFormState);
 
+        const clearFormDraft = () => {
+          try {
+            window.localStorage.removeItem(FORM_DRAFT_KEY);
+          } catch (e) {
+            console.warn("Não foi possível limpar o rascunho local.", e);
+          }
+        };
+
         /* Reset Form function */
         const resetForm = () => {
           setFormData(initialFormState);
@@ -579,6 +721,9 @@
           setIsSigning(false);
           setStep(1);
           setMessage(null);
+          setIsContractModalOpen(false);
+          setContractPreviewHtml("");
+          clearFormDraft();
         };
 
         /* Auto-calculate installments when total, deposit, or installments change */
@@ -633,16 +778,71 @@
         }, [step]);
 
         useEffect(() => {
-          const params = new URLSearchParams(window.location.search);
-          const editId = params.get("edit") || params.get("id");
-          if (editId) {
+          if (editIdFromQuery) {
             setIsAdminEdit(true);
-            setEditReservationId(editId);
-            loadReservationForEdit(editId, true);
+            setEditReservationId(editIdFromQuery);
+            loadReservationForEdit(editIdFromQuery, true);
           } else {
             setReadyForCalc(true);
           }
-        }, []);
+        }, [editIdFromQuery]);
+
+        useEffect(() => {
+          if (isAdminEdit || editIdFromQuery) return;
+
+          try {
+            const rawDraft = window.localStorage.getItem(FORM_DRAFT_KEY);
+            if (!rawDraft) return;
+
+            const parsed = JSON.parse(rawDraft);
+            if (parsed?.formData && typeof parsed.formData === "object") {
+              setFormData((prev) => ({ ...prev, ...parsed.formData }));
+            }
+
+            if (parsed?.signatureAccepted) {
+              setSignatureAccepted(true);
+            }
+
+            if (Number.isInteger(parsed?.step) && parsed.step >= 1 && parsed.step <= 4) {
+              setStep(parsed.step);
+            }
+
+            setMessage({
+              type: "info",
+              text: "Rascunho recuperado automaticamente.",
+            });
+          } catch (e) {
+            console.warn("Falha ao restaurar rascunho local.", e);
+          }
+        }, [isAdminEdit, editIdFromQuery]);
+
+        useEffect(() => {
+          if (isAdminEdit || editIdFromQuery || step === 5) return;
+          try {
+            const payload = {
+              formData,
+              step,
+              signatureAccepted,
+              savedAt: new Date().toISOString(),
+            };
+            window.localStorage.setItem(FORM_DRAFT_KEY, JSON.stringify(payload));
+          } catch (e) {
+            console.warn("Falha ao salvar rascunho local.", e);
+          }
+        }, [formData, step, signatureAccepted, isAdminEdit, editIdFromQuery]);
+
+        useEffect(() => {
+          if (!isAdminEdit && step === 5) {
+            clearFormDraft();
+          }
+        }, [step, isAdminEdit]);
+
+        useEffect(() => {
+          document.body.style.overflow = isContractModalOpen ? "hidden" : "";
+          return () => {
+            document.body.style.overflow = "";
+          };
+        }, [isContractModalOpen]);
 
         const notifyParent = (type) => {
           if (isEmbedded && window.parent && window.parent !== window) {
@@ -655,6 +855,30 @@
 
         const handleChange = (e) => {
           let { name, value } = e.target;
+
+          if (name === "check_in") {
+            setFormData((prev) => {
+              const nextData = { ...prev, check_in: value };
+              const minCheckOut = addDaysToIsoDate(value, 1);
+              if (!value) {
+                nextData.check_out = "";
+              } else if (
+                prev.check_out &&
+                minCheckOut &&
+                prev.check_out < minCheckOut
+              ) {
+                nextData.check_out = "";
+              }
+              return nextData;
+            });
+            return;
+          }
+
+          if (name === "check_out" && value && formData.check_in && value <= formData.check_in) {
+            setFormData((prev) => ({ ...prev, check_out: "" }));
+            alert("A data de saída deve ser posterior à data de entrada.");
+            return;
+          }
 
           /* Input Masks */
           if (name === "cpf") {
@@ -742,7 +966,9 @@
           const parser = new DOMParser();
           const doc = parser.parseFromString(html, "text/html");
           doc.querySelectorAll("script").forEach((s) => s.remove());
-          doc.querySelectorAll(".contract-toolbar").forEach((el) => el.remove());
+          doc
+            .querySelectorAll(".contract-toolbar")
+            .forEach((el) => el.remove());
 
           const container = document.createElement("div");
           container.style.position = "absolute";
@@ -1103,7 +1329,7 @@
                   amount: parseFloat(formData.deposit_amount),
                   date:
                     formData.deposit_date ||
-                    new Date().toISOString().split("T")[0],
+                    getTodayLocalIso(),
                   type: "Deposit",
                 });
                 for (let i = 2; i <= numInstallments + 1; i++) {
@@ -1262,7 +1488,7 @@
                 amount: parseFloat(formData.deposit_amount),
                 date:
                   formData.deposit_date ||
-                  new Date().toISOString().split("T")[0],
+                  getTodayLocalIso(),
                 type: "Deposit",
               });
               // Remaining
@@ -1421,7 +1647,6 @@
             <span class="contract-toolbar-title">Minuta do Contrato<\/span>
             <div class="contract-toolbar-actions">
                 <button type="button" class="toolbar-btn" onclick="window.print()">Imprimir<\/button>
-                <button type="button" class="toolbar-btn is-primary" onclick="window.close()">Fechar<\/button>
             <\/div>
         <\/div>
     <\/div>
@@ -1458,7 +1683,7 @@
 
     ${parcelasTexto ? `<p style="white-space: pre-line;">${parcelasTexto}<\/p>` : ""}
     <p style="margin-top: 20px;">O valor contratado é referente a locação para o total de <strong><span class="highlight">${formData.guests_count || "1"}<\/span><\/strong> pessoas.<\/p>
-    <p>Será cobrado o valor de R$500,00 (quinhentos reais) a título de caução para sanar qualquer dano que porventura venha ocorrer no flat. Esse valor será depositado no dia da entrada e devolvido na saída do flat.<\/p>
+    <p>Será cobrado o valor de R$250,00 (Duzentos e cinquenta reais) a título de caução para sanar qualquer dano que porventura venha ocorrer no flat. Esse valor será depositado no dia da entrada e devolvido na saída do flat.<\/p>
     ${formData.has_pet === "Sim" ? `<p><strong>Obs.:<\/strong> Pets só serão aceitos mediante a uma taxa extra de R$180,00 (já inclusa no valor total).<\/p>` : ""}
 
     <h2>4. RESPONSABILIDADES DO LOCATÁRIO<\/h2>
@@ -1586,8 +1811,18 @@
 
         const handleViewContract = () => {
           const contractHTML = getContractHTML();
+          setContractPreviewHtml(contractHTML);
+          setIsContractModalOpen(true);
+        };
+
+        const handleOpenContractInNewTab = () => {
+          const html = contractPreviewHtml || getContractHTML();
           const win = window.open("", "_blank");
-          win.document.write(contractHTML);
+          if (!win) {
+            alert("O navegador bloqueou a nova aba. Permita pop-ups para visualizar.");
+            return;
+          }
+          win.document.write(html);
           win.document.close();
         };
 
@@ -1691,7 +1926,8 @@
           if (count > 0) {
             return {
               available: false,
-              reason: "Datas indisponíveis! Já existe uma reserva para este período.",
+              reason:
+                "Datas indisponíveis! Já existe uma reserva para este período.",
             };
           }
 
@@ -1730,10 +1966,85 @@
           return { available: true };
         };
 
+        const isFieldFilled = (value) => {
+          if (value === null || value === undefined) return false;
+          return String(value).trim() !== "";
+        };
+
+        const getMissingFields = (fields) =>
+          fields
+            .filter(({ name, validate }) => {
+              const value = formData[name];
+              if (typeof validate === "function") {
+                return !validate(value, formData);
+              }
+              return !isFieldFilled(value);
+            })
+            .map(({ label }) => label);
+
+        const alertMissingFields = (stepName, fields) => {
+          alert(
+            `Preencha os campos obrigatórios de ${stepName} antes de continuar:\n- ${fields.join("\n- ")}`,
+          );
+        };
+
         const nextStep = async () => {
+          if (step === 1) {
+            const missingStep1 = getMissingFields([
+              { name: "full_name", label: "Nome Completo" },
+              {
+                name: "phone",
+                label: "Telefone",
+                validate: (value) =>
+                  (value || "").replace(/\D/g, "").length >= 10,
+              },
+              {
+                name: "email",
+                label: "E-mail",
+                validate: (value) =>
+                  /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value || ""),
+              },
+              {
+                name: "cpf",
+                label: "CPF",
+                validate: (value) =>
+                  (value || "").replace(/\D/g, "").length === 11,
+              },
+              { name: "profession", label: "Profissão" },
+              {
+                name: "address_zip_code",
+                label: "CEP",
+                validate: (value) =>
+                  (value || "").replace(/\D/g, "").length === 8,
+              },
+              { name: "address_street", label: "Endereço" },
+              { name: "address_number", label: "Número" },
+              { name: "address_district", label: "Bairro" },
+              { name: "address_city", label: "Cidade" },
+              { name: "address_state", label: "UF" },
+            ]);
+
+            if (missingStep1.length) {
+              alertMissingFields("Dados Pessoais", missingStep1);
+              return;
+            }
+          }
+
           if (step === 2) {
-            if (!formData.check_in || !formData.check_out) {
-              alert("Por favor, selecione as datas de entrada e saída.");
+            const missingStep2 = getMissingFields([
+              { name: "check_in", label: "Data de Entrada" },
+              { name: "check_in_time", label: "Hora de Entrada" },
+              { name: "check_out", label: "Data de Saída" },
+              { name: "check_out_time", label: "Hora de Saída" },
+              {
+                name: "guests_count",
+                label: "Número de Pessoas",
+                validate: (value) => Number(value) > 0,
+              },
+            ]);
+
+            if (missingStep2.length) {
+              alertMissingFields("Dados da Reserva", missingStep2);
               return;
             }
 
@@ -1771,6 +2082,61 @@
             }
             setLoading(false);
           }
+
+          if (step === 3) {
+            const missingStep3 = getMissingFields([
+              {
+                name: "total_amount",
+                label: "Valor Total da Reserva (R$)",
+                validate: (value) => Number(value) > 0,
+              },
+              { name: "payment_method", label: "Forma de Pagamento" },
+              {
+                name: "deposit_amount",
+                label: "Valor da Reserva (1ª Parcela) (R$)",
+                validate: (value) => Number(value) > 0,
+              },
+              { name: "deposit_date", label: "Data do Pagamento" },
+              { name: "is_paid", label: "Valor da Reserva Pago?" },
+              { name: "has_pet", label: "Possui Pet?" },
+              { name: "installments", label: "Número de Parcelas Restantes" },
+            ]);
+
+            if (missingStep3.length) {
+              alertMissingFields("Informações de Pagamento", missingStep3);
+              return;
+            }
+
+            const totalAmount = Number(formData.total_amount);
+            const depositAmount = Number(formData.deposit_amount);
+            if (depositAmount > totalAmount) {
+              alert(
+                "O valor da 1ª parcela não pode ser maior que o valor total da reserva.",
+              );
+              return;
+            }
+
+            const numRemaining = parseInt(formData.installments, 10) || 0;
+            const installmentErrors = [];
+            for (let i = 2; i <= numRemaining + 1; i++) {
+              const installmentValue = Number(formData[`parcela${i}`]);
+              const installmentDate = formData[`dataParcela${i}`];
+              if (!(installmentValue > 0)) {
+                installmentErrors.push(`Parcela ${i} (R$)`);
+              }
+              if (!isFieldFilled(installmentDate)) {
+                installmentErrors.push(`Data da Parcela ${i}`);
+              }
+            }
+
+            if (installmentErrors.length) {
+              alert(
+                `Preencha os detalhes das parcelas antes de avançar para Assinatura:\n- ${installmentErrors.join("\n- ")}`,
+              );
+              return;
+            }
+          }
+
           setStep((s) => s + 1);
         };
         const prevStep = () => setStep((s) => s - 1);
@@ -1815,7 +2181,7 @@
                       name={`dataParcela${parcelaNum}`}
                       value={formData[`dataParcela${parcelaNum}`] || ""}
                       onChange={handleChange}
-                      min={new Date().toISOString().split("T")[0]}
+                      min={getTodayLocalIso()}
                     />
                   </div>
                 </div>
@@ -2041,7 +2407,7 @@
                     </div>
                   </div>
 
-                  <div className="flex justify-end pt-4">
+                  <div className="mobile-actions flex justify-end pt-4">
                     <button onClick={nextStep} className="btn btn-primary">
                       Próximo
                     </button>
@@ -2063,7 +2429,7 @@
                         name="check_in"
                         value={formData.check_in}
                         onChange={handleChange}
-                        min={new Date().toISOString().split("T")[0]}
+                        min={getTodayLocalIso()}
                       />
                     </div>
                     <div>
@@ -2088,13 +2454,8 @@
                         onChange={handleChange}
                         min={
                           formData.check_in
-                            ? new Date(
-                                new Date(formData.check_in).getTime() +
-                                  86400000,
-                              )
-                                .toISOString()
-                                .split("T")[0]
-                            : new Date().toISOString().split("T")[0]
+                            ? addDaysToIsoDate(formData.check_in, 1)
+                            : getTodayLocalIso()
                         }
                       />
                     </div>
@@ -2119,7 +2480,7 @@
                       onChange={handleChange}
                     />
                   </div>
-                  <div className="flex justify-between pt-4">
+                  <div className="mobile-actions flex justify-between gap-3 pt-4">
                     <button onClick={prevStep} className="btn btn-outline">
                       Voltar
                     </button>
@@ -2272,7 +2633,7 @@
                     </div>
                   )}
 
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4">
+                  <div className="mobile-actions flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4">
                     <button onClick={prevStep} className="btn btn-outline">
                       Voltar
                     </button>
@@ -2365,7 +2726,7 @@
                     </div>
                   )}
 
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 gap-3">
+                  <div className="mobile-actions flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 gap-3">
                     <button onClick={prevStep} className="btn btn-outline">
                       Voltar
                     </button>
@@ -2468,6 +2829,45 @@
                           : "Voltar ao Formulário"
                         : "Nova Reserva"}
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {isContractModalOpen && (
+                <div
+                  className="contract-modal-backdrop"
+                  onClick={() => setIsContractModalOpen(false)}
+                >
+                  <div
+                    className="contract-modal-shell"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="contract-modal-header">
+                      <span className="contract-modal-title">
+                        Minuta do Contrato
+                      </span>
+                      <div className="contract-modal-actions">
+                        <button
+                          type="button"
+                          className="contract-modal-btn"
+                          onClick={handleOpenContractInNewTab}
+                        >
+                          Abrir em Nova Aba
+                        </button>
+                        <button
+                          type="button"
+                          className="contract-modal-btn is-primary"
+                          onClick={() => setIsContractModalOpen(false)}
+                        >
+                          Fechar
+                        </button>
+                      </div>
+                    </div>
+                    <iframe
+                      title="Minuta do Contrato"
+                      className="contract-modal-iframe"
+                      srcDoc={contractPreviewHtml}
+                    />
                   </div>
                 </div>
               )}
